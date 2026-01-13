@@ -55,7 +55,7 @@ export default function LoginPage() {
 
             {/* Content */}
             <main className="flex-1 flex items-center justify-center py-12 relative z-10">
-                <Container maxWidth="sm">
+                <Container maxWidth="lg">
                     <Card padding="lg" className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl shadow-indigo-100/50">
                         <div className="text-center mb-8">
                             <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>

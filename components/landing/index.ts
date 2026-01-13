@@ -1,0 +1,5 @@
+export { HowItWorks } from './HowItWorks'
+export { AITechnology } from './AITechnology'
+export { Features } from './Features'
+export { PricingPlans } from './PricingPlans'
+export { Footer } from './Footer'
