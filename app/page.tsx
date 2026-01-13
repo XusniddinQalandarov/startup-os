@@ -1,65 +1,144 @@
-import Image from "next/image";
+import Link from 'next/link'
+import Image from 'next/image'
+import { Button } from '@/components/ui'
+import { Container } from '@/components/layout'
+import { AnimatedBackground } from '@/components/ui/animated-background'
+import { getUser } from '@/app/actions/auth'
 
-export default function Home() {
+export default async function LandingPage() {
+  const user = await getUser()
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen flex flex-col relative">
+      <AnimatedBackground />
+
+      {/* Header */}
+      <header className="h-16 relative z-10 w-full">
+        <Container className="h-full flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/ideY.webp" alt="ideY Logo" width={48} height={36} className="w-auto h-9" />
+            <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              ideY
+            </span>
+          </Link>
+          <nav className="flex items-center gap-4">
+            {user ? (
+              <Link href="/dashboard">
+                <Button size="sm" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-200 border-0">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link href="/signup">
+                  <Button size="sm" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-200 border-0">
+                    Get Started Free
+                  </Button>
+                </Link>
+              </>
+            )}
+          </nav>
+        </Container>
+      </header>
+
+      {/* Hero */}
+      <main className="flex-1 flex items-center justify-center relative z-10 w-full">
+        <Container className="text-center max-w-3xl py-24">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-100 shadow-sm mb-8">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            <span className="text-sm font-medium text-gray-700">AI-Powered Startup Validation</span>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
+            <span className="text-gray-900">Turn your </span>
+            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+              startup idea
+            </span>
+            <br />
+            <span className="text-gray-900">into reality</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="text-xl text-gray-600 mb-10 max-w-xl mx-auto leading-relaxed">
+            Get honest feedback, customer questions, MVP scope, roadmap, and actionable tasks.
+            <span className="font-medium text-gray-900"> No hype, just execution.</span>
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {user ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-200/50 border-0 px-8">
+                  Go to Dashboard
+                  <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/onboarding">
+                <Button size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl shadow-indigo-200/50 border-0 px-8">
+                  Evaluate my idea
+                  <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Button>
+              </Link>
+            )}
+
+            {user ? (
+              <Link href="/onboarding">
+                <Button size="lg" variant="secondary" className="bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white">
+                  + New Project
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button size="lg" variant="secondary" className="bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white">
+                  I have an account
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {/* Social proof */}
+          <div className="mt-16 flex items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-orange-300 border-2 border-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-300 border-2 border-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-300 border-2 border-white" />
+              </div>
+              <span>Trusted by founders</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map(i => (
+                <svg key={i} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+              <span className="ml-1">5.0 rating</span>
+            </div>
+          </div>
+        </Container>
       </main>
+
+      {/* Footer */}
+      <footer className="h-16 relative z-10 w-full">
+        <Container className="h-full flex items-center justify-center">
+          <p className="text-sm text-gray-500">
+            Built for founders who ship. © 2024 ideY
+          </p>
+        </Container>
+      </footer>
     </div>
-  );
+  )
 }
