@@ -1,4 +1,4 @@
-import { ValidationStageClient } from '@/components/dashboard/validation-stage-client'
+import { IdeaCheckStageClient } from '@/components/dashboard/idea-check-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
 import { notFound } from 'next/navigation'
@@ -8,15 +8,15 @@ interface PageProps {
     params: Promise<{ projectId: string }>
 }
 
-// VALIDATION STAGE: Evaluation + Questions + Competitors (with tabs)
-export default async function ValidationStagePage({ params }: PageProps) {
+// STAGE 1: IDEA CHECK
+export default async function IdeaCheckPage({ params }: PageProps) {
     const { projectId } = await params
 
-    const [project, evaluation, questions, competitors] = await Promise.all([
+    const [project, evaluation, questions, analysis] = await Promise.all([
         getProject(projectId),
         getAiOutput(projectId, 'evaluation'),
         getAiOutput(projectId, 'questions'),
-        getAiOutput(projectId, 'competitors')
+        getAiOutput(projectId, 'analysis')
     ])
 
     if (!project) {
@@ -24,11 +24,11 @@ export default async function ValidationStagePage({ params }: PageProps) {
     }
 
     return (
-        <ValidationStageClient
+        <IdeaCheckStageClient
             project={project}
             evaluation={evaluation as IdeaEvaluation | null}
             questions={questions as CustomerQuestion[] | null}
-            competitorAnalysis={competitors}
+            problemData={analysis}
         />
     )
 }
