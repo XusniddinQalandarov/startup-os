@@ -6,16 +6,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     const projects = await getProjects()
 
     return (
-        <div className="min-h-screen bg-background font-sans text-gray-900 antialiased selection:bg-indigo-50 selection:text-indigo-900">
-            {/* Ambient Background Glow - Elite Feel */}
-            <div className="fixed inset-0 z-[-1] pointer-events-none">
-                <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-3xl opacity-50 mix-blend-multiply filter" />
-                <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-indigo-100/40 rounded-full blur-3xl opacity-50 mix-blend-multiply filter" />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/20 font-sans text-gray-900 antialiased selection:bg-indigo-50 selection:text-indigo-900">
+            {/* Subtle ambient background */}
+            <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+                <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-100/20 rounded-full blur-3xl" />
+                <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-100/20 rounded-full blur-3xl" />
             </div>
 
             <Sidebar projects={projects} />
 
-            <div className="pl-64 min-h-screen flex flex-col transition-all duration-300 ease-in-out">
+            <div className="pl-52 min-h-screen flex flex-col">
                 {children}
             </div>
         </div>

@@ -1,19 +1,21 @@
-import { MvpView } from '@/components/dashboard/mvp-view'
+import { ScopingStageClient } from '@/components/dashboard/scoping-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
 import { notFound } from 'next/navigation'
-import type { MvpFeature } from '@/types'
+import type { MvpFeature, TechStackRecommendation } from '@/types'
 
 interface PageProps {
     params: Promise<{ projectId: string }>
 }
 
-export default async function MvpPage({ params }: PageProps) {
+// SCOPING STAGE: MVP + Tech Stack (with tabs)
+export default async function ScopingStagePage({ params }: PageProps) {
     const { projectId } = await params
 
-    const [project, features] = await Promise.all([
+    const [project, features, techStack] = await Promise.all([
         getProject(projectId),
-        getAiOutput(projectId, 'mvp')
+        getAiOutput(projectId, 'mvp'),
+        getAiOutput(projectId, 'tech_stack')
     ])
 
     if (!project) {
@@ -21,9 +23,10 @@ export default async function MvpPage({ params }: PageProps) {
     }
 
     return (
-        <MvpView
+        <ScopingStageClient
             project={project}
-            initialFeatures={features as MvpFeature[] | null}
+            features={features as MvpFeature[] | null}
+            techStack={techStack as TechStackRecommendation[] | null}
         />
     )
 }

@@ -1,21 +1,22 @@
-import { OverviewView } from '@/components/dashboard/overview-view'
+import { ValidationStageClient } from '@/components/dashboard/validation-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
 import { notFound } from 'next/navigation'
-import type { IdeaEvaluation } from '@/types'
+import type { IdeaEvaluation, CustomerQuestion } from '@/types'
 
 interface PageProps {
     params: Promise<{ projectId: string }>
 }
 
-export default async function OverviewPage({ params }: PageProps) {
+// VALIDATION STAGE: Evaluation + Questions + Competitors (with tabs)
+export default async function ValidationStagePage({ params }: PageProps) {
     const { projectId } = await params
 
-    // Parallel data fetching on the server
-    // Request deduplication ensures getProject is free if Layout already fetched it
-    const [project, evaluation] = await Promise.all([
+    const [project, evaluation, questions, competitors] = await Promise.all([
         getProject(projectId),
-        getAiOutput(projectId, 'evaluation')
+        getAiOutput(projectId, 'evaluation'),
+        getAiOutput(projectId, 'questions'),
+        getAiOutput(projectId, 'competitors')
     ])
 
     if (!project) {
@@ -23,9 +24,11 @@ export default async function OverviewPage({ params }: PageProps) {
     }
 
     return (
-        <OverviewView
+        <ValidationStageClient
             project={project}
-            initialEvaluation={evaluation as IdeaEvaluation | null}
+            evaluation={evaluation as IdeaEvaluation | null}
+            questions={questions as CustomerQuestion[] | null}
+            competitorAnalysis={competitors}
         />
     )
 }

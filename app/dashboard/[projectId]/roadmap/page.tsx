@@ -1,19 +1,21 @@
-import { RoadmapView } from '@/components/dashboard/roadmap-view'
+import { PlanningStageClient } from '@/components/dashboard/planning-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
 import { notFound } from 'next/navigation'
-import type { RoadmapPhase } from '@/types'
+import type { RoadmapPhase, CostEstimate } from '@/types'
 
 interface PageProps {
     params: Promise<{ projectId: string }>
 }
 
-export default async function RoadmapPage({ params }: PageProps) {
+// PLANNING STAGE: Roadmap + Costs (with tabs)
+export default async function PlanningStagePage({ params }: PageProps) {
     const { projectId } = await params
 
-    const [project, roadmap] = await Promise.all([
+    const [project, roadmap, costs] = await Promise.all([
         getProject(projectId),
-        getAiOutput(projectId, 'roadmap')
+        getAiOutput(projectId, 'roadmap'),
+        getAiOutput(projectId, 'costs')
     ])
 
     if (!project) {
@@ -21,9 +23,10 @@ export default async function RoadmapPage({ params }: PageProps) {
     }
 
     return (
-        <RoadmapView
+        <PlanningStageClient
             project={project}
-            initialRoadmap={roadmap as RoadmapPhase[] | null}
+            roadmap={roadmap as RoadmapPhase[] | null}
+            costs={costs as CostEstimate[] | null}
         />
     )
 }
