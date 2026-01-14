@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
+import { PremiumLock } from '@/components/ui/premium-lock'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { Button } from '@/components/ui'
 import { MvpView } from '@/components/dashboard/mvp-view'
 import { TechView } from '@/components/dashboard/tech-view'
 import { TasksView } from '@/components/dashboard/tasks-view'
 import { RoadmapView } from '@/components/dashboard/roadmap-view'
+import { generateBuildPlan } from '@/app/actions/build-plan'
 import type { MvpFeature, TechStackRecommendation, RoadmapPhase, Task, Startup } from '@/types'
 
 interface BuildPlanStageClientProps {
@@ -14,6 +18,7 @@ interface BuildPlanStageClientProps {
     techStack: TechStackRecommendation[] | null
     roadmap: RoadmapPhase[] | null
     tasks: Task[]
+    isPremium?: boolean
 }
 
 const tabs = [
@@ -70,69 +75,133 @@ export function BuildPlanStageClient({
     features,
     techStack,
     roadmap,
-    tasks
+    tasks,
+    isPremium = false // Default to locked
 }: BuildPlanStageClientProps) {
     const [activeTab, setActiveTab] = useState('mvp')
+    const [isGenerating, setIsGenerating] = useState(false)
     const buildTime = getBuildTime(roadmap)
+    const hasData = features && features.length > 0
+
+    const handleGenerateAll = async () => {
+        setIsGenerating(true)
+        try {
+            await generateBuildPlan(project.id, project.idea, project.founderType)
+            setIsGenerating(false)
+        } catch (error) {
+            console.error('Generation failed', error)
+            setIsGenerating(false)
+        }
+    }
+
+    const EmptyState = () => (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+            <div className="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Create Your Build Plan</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+                Get a complete MVP scope, recommended tech stack, development roadmap, and actionable tasks.
+            </p>
+            <Button
+                size="lg"
+                onClick={handleGenerateAll}
+                className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-xl shadow-violet-200/50 border-0 transform hover:scale-105 transition-all"
+            >
+                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate Build Plan
+            </Button>
+        </div>
+    )
 
     return (
-        <div className="space-y-6">
-            {/* Stage Header with Summary */}
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-violet-200/50">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                        </svg>
+        <PremiumLock isLocked={!isPremium}>
+            <div className="space-y-6">
+                <FullScreenLoader isLoading={isGenerating} message="Scoping MVP, choosing tech stack, and planning roadmap..." />
+
+                {/* Stage Header with Summary */}
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-violet-200/50">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Build Plan</h1>
+                            <p className="text-sm text-gray-500">What does it take to build an MVP?</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Build Plan</h1>
-                        <p className="text-sm text-gray-500">What does it take to build an MVP?</p>
+
+                    {/* Actions & Summary */}
+                    <div className="flex items-center gap-4">
+                        {!hasData && (
+                            <Button
+                                onClick={handleGenerateAll}
+                                className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-violet-200/50 border-0"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Generate Plan
+                            </Button>
+                        )}
+
+                        <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className="text-xl font-bold text-violet-600">
+                                {buildTime}
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-400 uppercase tracking-wider">Build Time</p>
+                                <p className="text-sm font-medium text-gray-700">{features ? `${features.filter(f => f.priority === 'must_have').length} must-have features` : 'Not scoped'}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Summary pill */}
-                <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <div className="text-xl font-bold text-violet-600">
-                        {buildTime}
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xs text-gray-400 uppercase tracking-wider">Build Time</p>
-                        <p className="text-sm font-medium text-gray-700">{features ? `${features.filter(f => f.priority === 'must_have').length} must-have features` : 'Not scoped'}</p>
-                    </div>
-                </div>
+                {/* Tabs */}
+                <StageTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
+                    <TabPanel isActive={activeTab === 'mvp'}>
+                        {hasData ? (
+                            <MvpView
+                                project={project}
+                                initialFeatures={features}
+                            />
+                        ) : <EmptyState />}
+                    </TabPanel>
+
+                    <TabPanel isActive={activeTab === 'tech'}>
+                        {hasData ? (
+                            <TechView
+                                project={project}
+                                initialStack={techStack}
+                            />
+                        ) : <EmptyState />}
+                    </TabPanel>
+
+                    <TabPanel isActive={activeTab === 'timeline'}>
+                        {hasData ? (
+                            <RoadmapView
+                                project={project}
+                                initialRoadmap={roadmap}
+                            />
+                        ) : <EmptyState />}
+                    </TabPanel>
+
+                    <TabPanel isActive={activeTab === 'tasks'}>
+                        {hasData ? (
+                            <TasksView
+                                project={project}
+                                initialTasks={tasks}
+                            />
+                        ) : <EmptyState />}
+                    </TabPanel>
+                </StageTabs>
             </div>
-
-            {/* Tabs */}
-            <StageTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
-                <TabPanel isActive={activeTab === 'mvp'}>
-                    <MvpView
-                        project={project}
-                        initialFeatures={features}
-                    />
-                </TabPanel>
-
-                <TabPanel isActive={activeTab === 'tech'}>
-                    <TechView
-                        project={project}
-                        initialStack={techStack}
-                    />
-                </TabPanel>
-
-                <TabPanel isActive={activeTab === 'timeline'}>
-                    <RoadmapView
-                        project={project}
-                        initialRoadmap={roadmap}
-                    />
-                </TabPanel>
-
-                <TabPanel isActive={activeTab === 'tasks'}>
-                    <TasksView
-                        project={project}
-                        initialTasks={tasks}
-                    />
-                </TabPanel>
-            </StageTabs>
-        </div>
+        </PremiumLock>
     )
 }

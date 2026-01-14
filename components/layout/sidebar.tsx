@@ -67,9 +67,10 @@ const stages = [
 
 interface SidebarProps {
     projects: Startup[]
+    isPremium: boolean
 }
 
-export function Sidebar({ projects }: SidebarProps) {
+export function Sidebar({ projects, isPremium }: SidebarProps) {
     const pathname = usePathname()
     const params = useParams()
     const currentProjectId = params?.projectId as string | undefined
@@ -169,10 +170,14 @@ export function Sidebar({ projects }: SidebarProps) {
                     All Projects
                 </Link>
                 <div className="px-3 py-2 flex items-center justify-between">
-                    <span className="text-[10px] text-gray-400">Free Plan</span>
-                    <Link href="/#pricing" className="text-[10px] text-indigo-500 hover:text-indigo-600 font-medium">
-                        Upgrade
-                    </Link>
+                    <span className="text-[10px] text-gray-400">
+                        {isPremium ? 'Premium Plan' : 'Free Plan'}
+                    </span>
+                    {!isPremium && (
+                        <Link href="/profile" className="text-[10px] text-indigo-500 hover:text-indigo-600 font-medium">
+                            Upgrade
+                        </Link>
+                    )}
                 </div>
             </div>
         </aside>

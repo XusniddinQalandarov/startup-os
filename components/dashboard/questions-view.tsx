@@ -12,18 +12,11 @@ interface QuestionsViewProps {
 
 export function QuestionsView({ project, initialQuestions }: QuestionsViewProps) {
     const [questions, setQuestions] = useState<CustomerQuestion[] | null>(initialQuestions)
-    const [isGenerating, setIsGenerating] = useState(false)
+    // const [isGenerating, setIsGenerating] = useState(false) // Removed
     const [copiedId, setCopiedId] = useState<string | null>(null)
     const [expandedId, setExpandedId] = useState<string | null>(null)
 
-    const handleGenerate = async () => {
-        setIsGenerating(true)
-        const result = await generateCustomerQuestions(project.id, project.idea, project.businessType)
-        if (result) {
-            setQuestions(result)
-        }
-        setIsGenerating(false)
-    }
+    // handleGenerate removed - handled by parent
 
     const handleCopy = async (question: string, id: string) => {
         await navigator.clipboard.writeText(question)
@@ -50,29 +43,35 @@ export function QuestionsView({ project, initialQuestions }: QuestionsViewProps)
                         <p className="text-gray-500 mb-6 max-w-sm mx-auto text-sm">
                             AI will generate questions to ask and questions to avoid.
                         </p>
-                        <Button onClick={handleGenerate} isLoading={isGenerating}>
-                            {isGenerating ? 'Generating...' : 'Generate Questions'}
-                        </Button>
+                        {/* Parent handles generation */}
                     </div>
                 </Card>
             </div>
         )
     }
 
+    // Safety check for array
+    const safeQuestions = Array.isArray(questions) ? questions : (questions as any)?.questions || []
+
+    if (!Array.isArray(safeQuestions) || safeQuestions.length === 0) {
+        return (
+            <div className="text-center p-8 text-gray-500">
+                No questions generated yet.
+            </div>
+        )
+    }
+
     // Split into ask vs avoid
-    const askQuestions = questions.filter(q => q.flagType === 'ask')
-    const avoidQuestions = questions.filter(q => q.flagType === 'avoid')
+    const askQuestions = safeQuestions.filter((q: CustomerQuestion) => q.flagType === 'ask')
+    const avoidQuestions = safeQuestions.filter((q: CustomerQuestion) => q.flagType === 'avoid')
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Customer Questions</h1>
-                    <p className="text-gray-500 mt-1">{questions.length} questions generated</p>
+                    <p className="text-gray-500 mt-1">{safeQuestions.length} questions generated</p>
                 </div>
-                <Button variant="secondary" onClick={handleGenerate} isLoading={isGenerating}>
-                    Regenerate
-                </Button>
             </div>
 
             {/* Two Column Layout */}

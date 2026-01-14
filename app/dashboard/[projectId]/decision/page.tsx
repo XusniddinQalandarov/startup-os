@@ -1,6 +1,7 @@
 import { DecisionStageClient } from '@/components/dashboard/decision-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
+import { isPremiumUser } from '@/app/actions/user'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
@@ -11,10 +12,11 @@ interface PageProps {
 export default async function DecisionPage({ params }: PageProps) {
     const { projectId } = await params
 
-    const [project, analysis, evaluation] = await Promise.all([
+    const [project, analysis, evaluation, isPremium] = await Promise.all([
         getProject(projectId),
         getAiOutput(projectId, 'analysis'),
-        getAiOutput(projectId, 'evaluation')
+        getAiOutput(projectId, 'evaluation'),
+        isPremiumUser()
     ])
 
     if (!project) {
@@ -26,6 +28,7 @@ export default async function DecisionPage({ params }: PageProps) {
             project={project}
             analysisData={analysis}
             evaluation={evaluation}
+            isPremium={isPremium}
         />
     )
 }

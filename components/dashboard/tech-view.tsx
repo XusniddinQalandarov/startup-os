@@ -1,19 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, Button } from '@/components/ui'
+import { Card, Button, Modal, Input, Textarea } from '@/components/ui'
 import { generateTechStack } from '@/app/actions/ai'
 import { TechStackRecommendation, Startup } from '@/types'
-import Image from 'next/image'
 
 interface TechViewProps {
     project: Startup
     initialStack: TechStackRecommendation[] | null
 }
 
-// Category icons - these will be replaced with database images
-// When you add images to DB, pass them as part of the TechStackRecommendation
-const categoryImages: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
+// Category icons and colors
+const categoryConfig: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
     Frontend: {
         color: 'text-blue-600',
         bgColor: 'bg-blue-100',
@@ -89,9 +87,13 @@ const defaultCategory = {
     ),
 }
 
+const categories = ['Frontend', 'Backend', 'Database', 'Hosting', 'AI/ML', 'Payments', 'Analytics']
+
 export function TechView({ project, initialStack }: TechViewProps) {
     const [stack, setStack] = useState<TechStackRecommendation[] | null>(initialStack)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [editingItem, setEditingItem] = useState<TechStackRecommendation | null>(null)
+    const [editIndex, setEditIndex] = useState<number>(-1)
 
     const handleGenerate = async () => {
         setIsGenerating(true)
@@ -100,6 +102,22 @@ export function TechView({ project, initialStack }: TechViewProps) {
             setStack(result)
         }
         setIsGenerating(false)
+    }
+
+    const handleEdit = (item: TechStackRecommendation, index: number) => {
+        setEditingItem({ ...item })
+        setEditIndex(index)
+    }
+
+    const handleSaveEdit = () => {
+        if (!editingItem || !stack) return
+
+        const updatedStack = [...stack]
+        updatedStack[editIndex] = editingItem
+        setStack(updatedStack)
+        setEditingItem(null)
+        setEditIndex(-1)
+        // TODO: Save to database when API is ready
     }
 
     if (!stack) {
@@ -130,19 +148,12 @@ export function TechView({ project, initialStack }: TechViewProps) {
         )
     }
 
-    // Group by category
-    const groupedStack = stack.reduce((acc, item) => {
-        if (!acc[item.category]) acc[item.category] = []
-        acc[item.category].push(item)
-        return acc
-    }, {} as Record<string, TechStackRecommendation[]>)
-
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Tech Stack</h1>
-                    <p className="text-gray-600 mt-1">Recommended technologies for your startup</p>
+                    <p className="text-gray-600 mt-1">Click any card to edit recommendations</p>
                 </div>
                 <Button variant="secondary" onClick={handleGenerate} isLoading={isGenerating}>
                     Regenerate
@@ -150,58 +161,51 @@ export function TechView({ project, initialStack }: TechViewProps) {
             </div>
 
             {/* Stack Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(groupedStack).map(([category, items]) => {
-                    const categoryConfig = categoryImages[category] || defaultCategory
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {stack.map((item, index) => {
+                    const config = categoryConfig[item.category] || defaultCategory
 
-                    return items.map((item, index) => (
+                    return (
                         <Card
-                            key={`${category}-${index}`}
-                            padding="md"
-                            className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group"
+                            key={`${item.category}-${index}`}
+                            padding="lg"
+                            className="hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group cursor-pointer"
+                            onClick={() => handleEdit(item, index)}
                         >
                             <div className="flex items-start gap-4">
-                                {/* Category Icon/Image */}
-                                <div className={`p-3 rounded-xl ${categoryConfig.bgColor} ${categoryConfig.color} group-hover:scale-110 transition-transform`}>
-                                    {categoryConfig.icon}
+                                {/* Category Icon */}
+                                <div className={`p-3 rounded-xl ${config.bgColor} ${config.color} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                                    {config.icon}
                                 </div>
 
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1">
                                     {/* Category Tag */}
-                                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-2 ${categoryConfig.bgColor} ${categoryConfig.color}`}>
-                                        {category}
+                                    <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-2 ${config.bgColor} ${config.color}`}>
+                                        {item.category}
                                     </span>
 
                                     {/* Recommendation */}
-                                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                    <h3 className="text-lg font-semibold text-gray-900">
                                         {item.recommendation}
                                     </h3>
 
                                     {/* Reason */}
-                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                    <p className="text-sm text-gray-600 mt-2 leading-relaxed">
                                         {item.reason}
                                     </p>
                                 </div>
+
+                                {/* Edit indicator */}
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </div>
                             </div>
                         </Card>
-                    ))
+                    )
                 })}
             </div>
-
-            {/* Legend */}
-            <Card padding="md" className="border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                    {Object.entries(categoryImages).map(([category, config]) => (
-                        <div key={category} className="flex flex-col items-center gap-2 text-center">
-                            <div className={`p-2 rounded-lg ${config.bgColor} ${config.color}`}>
-                                {config.icon}
-                            </div>
-                            <span className="text-xs text-gray-600">{category}</span>
-                        </div>
-                    ))}
-                </div>
-            </Card>
 
             {/* Tip */}
             <Card padding="md" className="border-gray-200 bg-gray-50">
@@ -220,6 +224,49 @@ export function TechView({ project, initialStack }: TechViewProps) {
                     </div>
                 </div>
             </Card>
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={!!editingItem}
+                onClose={() => setEditingItem(null)}
+                title="Edit Tech Recommendation"
+                footer={
+                    <>
+                        <Button variant="secondary" onClick={() => setEditingItem(null)}>Cancel</Button>
+                        <Button onClick={handleSaveEdit}>Save Changes</Button>
+                    </>
+                }
+            >
+                {editingItem && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select
+                                value={editingItem.category}
+                                onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <Input
+                            label="Technology/Tool"
+                            value={editingItem.recommendation}
+                            onChange={(e) => setEditingItem({ ...editingItem, recommendation: e.target.value })}
+                            placeholder="e.g., Next.js 14, PostgreSQL, Stripe"
+                        />
+                        <Textarea
+                            label="Reason"
+                            value={editingItem.reason}
+                            onChange={(e) => setEditingItem({ ...editingItem, reason: e.target.value })}
+                            placeholder="Why is this technology recommended?"
+                            rows={3}
+                        />
+                    </div>
+                )}
+            </Modal>
         </div>
     )
 }

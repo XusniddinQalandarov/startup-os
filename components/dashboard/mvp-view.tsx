@@ -1,19 +1,160 @@
 'use client'
 
 import { useState } from 'react'
+import {
+    DndContext,
+    DragOverlay,
+    rectIntersection,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragStartEvent,
+    DragEndEvent,
+    DragOverEvent,
+} from '@dnd-kit/core'
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { Card, Button } from '@/components/ui'
 import { generateMvpScope } from '@/app/actions/ai'
 import { MvpFeature, Startup } from '@/types'
 import { cn } from '@/lib/utils'
+
+type FeaturePriority = 'must_have' | 'later' | 'not_now'
 
 interface MvpViewProps {
     project: Startup
     initialFeatures: MvpFeature[] | null
 }
 
+const columns: { id: FeaturePriority; title: string; color: string; headerColor: string; activeColor: string }[] = [
+    { id: 'must_have', title: 'Must Have', color: 'bg-green-50/50', headerColor: 'bg-green-100 text-green-900', activeColor: 'ring-2 ring-green-400 bg-green-100' },
+    { id: 'later', title: 'Later', color: 'bg-yellow-50/50', headerColor: 'bg-yellow-100 text-yellow-900', activeColor: 'ring-2 ring-yellow-400 bg-yellow-100' },
+    { id: 'not_now', title: 'Not Now', color: 'bg-gray-50', headerColor: 'bg-gray-100 text-gray-900', activeColor: 'ring-2 ring-gray-400 bg-gray-200' },
+]
+
+interface SortableFeatureProps {
+    feature: MvpFeature
+}
+
+function SortableFeature({ feature }: SortableFeatureProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: feature.id })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging ? 1000 : 1,
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <FeatureCard feature={feature} isDragging={isDragging} />
+        </div>
+    )
+}
+
+function FeatureCard({ feature, isDragging }: { feature: MvpFeature; isDragging?: boolean }) {
+    return (
+        <Card
+            padding="sm"
+            className={cn(
+                "bg-white shadow-sm hover:shadow-md transition-all cursor-grab group",
+                isDragging && "shadow-xl rotate-2 scale-105"
+            )}
+        >
+            <h3 className="font-medium text-gray-900">{feature.title}</h3>
+            <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-700 transition-colors">
+                {feature.description}
+            </p>
+        </Card>
+    )
+}
+
+interface DroppableColumnProps {
+    column: typeof columns[0]
+    features: MvpFeature[]
+    isActive: boolean
+}
+
+function DroppableColumn({ column, features, isActive }: DroppableColumnProps) {
+    const { setNodeRef, isOver } = useDroppable({
+        id: column.id,
+    })
+
+    const featureIds = features.map(f => f.id)
+
+    return (
+        <div className="flex flex-col flex-1 min-w-0">
+            <div className={cn(
+                "p-3 border-b border-gray-100 rounded-t-xl font-medium flex items-center justify-between",
+                column.headerColor
+            )}>
+                <span className="capitalize">{column.title}</span>
+                <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full">{features.length}</span>
+            </div>
+
+            <div
+                ref={setNodeRef}
+                className={cn(
+                    "flex-1 p-3 rounded-b-xl min-h-[300px] transition-all duration-150",
+                    column.color,
+                    (isOver || isActive) && column.activeColor
+                )}
+            >
+                <SortableContext items={featureIds} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                        {features.map(feature => (
+                            <SortableFeature key={feature.id} feature={feature} />
+                        ))}
+                        {features.length === 0 && (
+                            <div className={cn(
+                                "flex items-center justify-center h-24 rounded-lg border-2 border-dashed transition-colors",
+                                (isOver || isActive)
+                                    ? "border-current bg-white/50 text-gray-600"
+                                    : "border-gray-200 text-gray-400"
+                            )}>
+                                <span className="text-sm italic">
+                                    {isOver ? 'Drop here!' : 'No features'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </SortableContext>
+            </div>
+        </div>
+    )
+}
+
 export function MvpView({ project, initialFeatures }: MvpViewProps) {
     const [features, setFeatures] = useState<MvpFeature[] | null>(initialFeatures)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [activeFeature, setActiveFeature] = useState<MvpFeature | null>(null)
+    const [activeColumn, setActiveColumn] = useState<FeaturePriority | null>(null)
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 3,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
 
     const handleGenerate = async () => {
         setIsGenerating(true)
@@ -24,7 +165,65 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
         setIsGenerating(false)
     }
 
-    // The original page had columns. I should replicate that structure.
+    const handleDragStart = (event: DragStartEvent) => {
+        if (!features) return
+        const feature = features.find(f => f.id === event.active.id)
+        if (feature) {
+            setActiveFeature(feature)
+        }
+    }
+
+    const handleDragOver = (event: DragOverEvent) => {
+        const { over } = event
+        if (!over || !features) {
+            setActiveColumn(null)
+            return
+        }
+
+        // Check if over a column
+        const overColumn = columns.find(c => c.id === over.id)
+        if (overColumn) {
+            setActiveColumn(overColumn.id)
+            return
+        }
+
+        // Check if over a feature - get its column
+        const overFeature = features.find(f => f.id === over.id)
+        if (overFeature) {
+            setActiveColumn(overFeature.priority)
+        }
+    }
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        setActiveFeature(null)
+        setActiveColumn(null)
+
+        if (!over || !features) return
+
+        const draggedFeature = features.find(f => f.id === active.id)
+        if (!draggedFeature) return
+
+        // Check if dropped over a column directly
+        const overColumn = columns.find(c => c.id === over.id)
+        if (overColumn && draggedFeature.priority !== overColumn.id) {
+            setFeatures(prev => prev?.map(f =>
+                f.id === draggedFeature.id ? { ...f, priority: overColumn.id } : f
+            ) || null)
+            return
+        }
+
+        // Check if dropped over another feature
+        const overFeature = features.find(f => f.id === over.id)
+        if (overFeature && draggedFeature.priority !== overFeature.priority) {
+            setFeatures(prev => prev?.map(f =>
+                f.id === draggedFeature.id ? { ...f, priority: overFeature.priority } : f
+            ) || null)
+        }
+    }
+
+    const getFeaturesByPriority = (priority: FeaturePriority) =>
+        features?.filter(f => f.priority === priority) || []
 
     if (!features) {
         return (
@@ -54,53 +253,44 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
         )
     }
 
-    const columns = {
-        must_have: features.filter(f => f.priority === 'must_have'),
-        later: features.filter(f => f.priority === 'later'),
-        not_now: features.filter(f => f.priority === 'not_now'),
-    }
-
     return (
-        <div className="space-y-6 h-[calc(100vh-140px)] flex flex-col">
+        <div className="space-y-6 h-[calc(100vh-200px)] flex flex-col">
             <div className="flex items-center justify-between flex-shrink-0">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">MVP Scope</h1>
-                    <p className="text-gray-600 mt-1">Define what to build now vs later</p>
+                    <p className="text-gray-600 mt-1">Drag features between columns to reprioritize</p>
                 </div>
                 <Button variant="secondary" onClick={handleGenerate} isLoading={isGenerating}>
                     Regenerate
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
-                {(Object.entries(columns) as [string, MvpFeature[]][]).map(([columnId, items]) => (
-                    <div key={columnId} className="flex flex-col bg-gray-50/50 rounded-xl border border-gray-100 h-full">
-                        <div className={cn(
-                            "p-3 border-b border-gray-100 rounded-t-xl font-medium flex items-center justify-between",
-                            columnId === 'must_have' ? "bg-green-50 text-green-900" :
-                                columnId === 'later' ? "bg-yellow-50 text-yellow-900" :
-                                    "bg-gray-100 text-gray-900"
-                        )}>
-                            <span className="capitalize">{columnId.replace('_', ' ')}</span>
-                            <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full">{items.length}</span>
-                        </div>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={rectIntersection}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+            >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
+                    {columns.map(column => (
+                        <DroppableColumn
+                            key={column.id}
+                            column={column}
+                            features={getFeaturesByPriority(column.id)}
+                            isActive={activeColumn === column.id}
+                        />
+                    ))}
+                </div>
 
-                        <div className="flex-1 p-3 overflow-y-auto space-y-3">
-                            {items.map((feature) => (
-                                <Card key={feature.id} padding="sm" className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-default group">
-                                    <h3 className="font-medium text-gray-900">{feature.title}</h3>
-                                    <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-700 transition-colors">{feature.description}</p>
-                                </Card>
-                            ))}
-                            {items.length === 0 && (
-                                <div className="text-center py-10 text-gray-400 text-sm italic">
-                                    No features
-                                </div>
-                            )}
+                <DragOverlay dropAnimation={null}>
+                    {activeFeature && (
+                        <div className="rotate-2 scale-105 shadow-2xl opacity-90">
+                            <FeatureCard feature={activeFeature} isDragging />
                         </div>
-                    </div>
-                ))}
-            </div>
+                    )}
+                </DragOverlay>
+            </DndContext>
         </div>
     )
 }

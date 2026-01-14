@@ -19,6 +19,7 @@ interface StageTabsProps {
 export function StageTabs({ tabs, activeTab, onTabChange, children }: StageTabsProps) {
     const tabsRef = useRef<HTMLDivElement>(null)
     const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
+    const [isLoading, setIsLoading] = useState(false)
 
     // Update indicator position when active tab changes
     useEffect(() => {
@@ -33,8 +34,30 @@ export function StageTabs({ tabs, activeTab, onTabChange, children }: StageTabsP
         }
     }, [activeTab])
 
+    const handleTabClick = (tabId: string) => {
+        if (tabId === activeTab) return
+
+        setIsLoading(true)
+        onTabChange(tabId)
+
+        // Reset loading state after animation
+        setTimeout(() => {
+            setIsLoading(false)
+        }, 500)
+    }
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 relative">
+            {/* Top Gradient Loading Line */}
+            <div className="fixed top-0 left-0 right-0 h-1 z-50">
+                <div
+                    className={cn(
+                        "h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out",
+                        isLoading ? "w-full opacity-100" : "w-0 opacity-0"
+                    )}
+                />
+            </div>
+
             {/* Tab Navigation */}
             <div className="relative">
                 {/* Tab container with subtle bg */}
@@ -56,7 +79,7 @@ export function StageTabs({ tabs, activeTab, onTabChange, children }: StageTabsP
                         <button
                             key={tab.id}
                             data-tab={tab.id}
-                            onClick={() => onTabChange(tab.id)}
+                            onClick={() => handleTabClick(tab.id)}
                             className={cn(
                                 "relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200",
                                 activeTab === tab.id

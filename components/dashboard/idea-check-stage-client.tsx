@@ -5,6 +5,9 @@ import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { OverviewView } from '@/components/dashboard/overview-view'
 import { QuestionsView } from '@/components/dashboard/questions-view'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { Button } from '@/components/ui'
+import { generateIdeaCheck } from '@/app/actions/idea-check'
 import type { IdeaEvaluation, CustomerQuestion, Startup } from '@/types'
 
 interface IdeaCheckStageClientProps {
@@ -45,11 +48,30 @@ const tabs = [
 ]
 
 // Calculate idea health score from evaluation and content
+// Pain Score = average of all dimensions (all are positive: higher = better)
+// Backward compatible with old field names
 function calculateIdeaHealth(evaluation: IdeaEvaluation | null, problemContent: string, icpContent: string): { score: number; message: string } {
     if (!evaluation) return { score: 0, message: 'Not evaluated yet' }
 
-    const { marketPotential, feasibility, uniqueness, competition } = evaluation.scores
-    let score = Math.round((marketPotential + feasibility + uniqueness + (100 - competition)) / 4)
+    const scores = evaluation.scores as Record<string, number>
+
+    // Support both new and old field names for backward compatibility
+    const problemSeverity = scores.problemSeverity ?? scores.marketPotential ?? 50
+    const marketOpportunity = scores.marketOpportunity ?? scores.marketPotential ?? 50
+    const feasibility = scores.feasibility ?? 50
+    const differentiation = scores.differentiation ?? scores.uniqueness ?? 50
+    // If old 'competition' exists, invert it (high competition = low opportunity)
+    const competitionAdjustment = scores.competition ? (100 - scores.competition) : 0
+
+    // Calculate base score
+    let score: number
+    if (scores.problemSeverity !== undefined) {
+        // New format - simple average
+        score = Math.round((problemSeverity + marketOpportunity + feasibility + differentiation) / 4)
+    } else {
+        // Old format - invert competition
+        score = Math.round((scores.marketPotential + feasibility + scores.uniqueness + competitionAdjustment) / 4)
+    }
 
     // Boost score if content is detailed (more than 200 chars)
     if (problemContent && problemContent.length > 200) score = Math.min(100, score + 3)
@@ -60,6 +82,7 @@ function calculateIdeaHealth(evaluation: IdeaEvaluation | null, problemContent: 
     return { score, message: 'Weak problem signal' }
 }
 
+
 export function IdeaCheckStageClient({
     project,
     evaluation,
@@ -68,6 +91,7 @@ export function IdeaCheckStageClient({
 }: IdeaCheckStageClientProps) {
     const [activeTab, setActiveTab] = useState('problem')
     const [isSaving, setIsSaving] = useState(false)
+    const [isGenerating, setIsGenerating] = useState(false)
 
     // Local state for editable content
     const [problemContent, setProblemContent] = useState(problemData?.problemStatement?.content || '')
@@ -76,27 +100,44 @@ export function IdeaCheckStageClient({
     // Calculate health based on current content
     const ideaHealth = calculateIdeaHealth(evaluation, problemContent, icpContent)
 
+    // Check if we have valid data for all sections
+    const hasData = !!evaluation && (Array.isArray(questions) && questions.length > 0) && !!problemData
+
+    const handleGenerateAll = async () => {
+        setIsGenerating(true)
+        try {
+            await generateIdeaCheck(project.id, project.idea, project.targetUsers, project.businessType)
+            // No need to reset state manually as revalidatePath will refetch data
+            // But we keep loader for smoother UX until new props arrive (implicitly handled by React)
+            setIsGenerating(false)
+        } catch (error) {
+            console.error('Generation failed', error)
+            setIsGenerating(false)
+        }
+    }
+
     const handleSaveProblem = useCallback(async (newContent: string) => {
         setIsSaving(true)
         setProblemContent(newContent)
         // TODO: Save to backend when API is ready
-        // await updateAnalysisSection(project.id, 'problemStatement', newContent)
-        setTimeout(() => setIsSaving(false), 500) // Simulate save
+        setTimeout(() => setIsSaving(false), 500)
     }, [])
 
     const handleSaveIcp = useCallback(async (newContent: string) => {
         setIsSaving(true)
         setIcpContent(newContent)
         // TODO: Save to backend when API is ready
-        // await updateAnalysisSection(project.id, 'targetAudience', newContent)
         setTimeout(() => setIsSaving(false), 500)
     }, [])
 
     return (
         <div className="space-y-6">
+            <FullScreenLoader isLoading={isGenerating} message="Analyzing idea, generating questions, and calculating score..." />
+
             {/* Stage Header with Summary */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
+                    {/* ... icon & title ... */}
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-200/50">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -108,26 +149,43 @@ export function IdeaCheckStageClient({
                     </div>
                 </div>
 
-                {/* Summary pill - now recalculates on edit */}
-                {evaluation && (
-                    <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
-                        <div className={`text-2xl font-bold transition-colors ${ideaHealth.score >= 70 ? 'text-emerald-600' :
+                {/* Actions & Summary */}
+                <div className="flex items-center gap-4">
+                    {/* Generate / Regenerate Button */}
+                    <Button
+                        onClick={handleGenerateAll}
+                        disabled={isGenerating}
+                        variant={hasData ? "secondary" : undefined}
+                        className={!hasData ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-200/50 border-0" : ""}
+                    >
+                        {!hasData && (
+                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        )}
+                        {hasData ? (isGenerating ? 'Regenerating...' : 'Regenerate Analysis') : (isGenerating ? 'Analyzing...' : 'Generate Analysis')}
+                    </Button>
+
+                    {evaluation && (
+                        <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div className={`text-2xl font-bold transition-colors ${ideaHealth.score >= 70 ? 'text-emerald-600' :
                                 ideaHealth.score >= 50 ? 'text-amber-600' : 'text-red-500'
-                            }`}>
-                            {ideaHealth.score}%
+                                }`}>
+                                {ideaHealth.score}%
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-gray-400 uppercase tracking-wider">Idea Health</p>
+                                <p className="text-sm font-medium text-gray-700">{ideaHealth.message}</p>
+                            </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs text-gray-400 uppercase tracking-wider">Idea Health</p>
-                            <p className="text-sm font-medium text-gray-700">{ideaHealth.message}</p>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Tabs */}
             <StageTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
                 <TabPanel isActive={activeTab === 'problem'}>
-                    {/* Problem & ICP Content - Now Editable */}
+                    {/* Problem & ICP Content - Editable */}
                     <div className="space-y-6">
                         {(problemContent || icpContent || problemData) ? (
                             <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
@@ -148,13 +206,26 @@ export function IdeaCheckStageClient({
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-                                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                     </svg>
                                 </div>
-                                <p className="text-gray-500">Generate analysis in the Decision stage to see problem details here.</p>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Check Your Idea's Health</h3>
+                                <p className="text-gray-500 max-w-md mx-auto mb-6">
+                                    Get an instant analysis of your problem statement, ideal customer profile, and critical validation questions.
+                                </p>
+                                <Button
+                                    size="lg"
+                                    onClick={handleGenerateAll}
+                                    className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-xl shadow-amber-200/50 border-0 transform hover:scale-105 transition-all"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Analyze My Idea
+                                </Button>
                             </div>
                         )}
                     </div>

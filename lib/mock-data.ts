@@ -12,10 +12,10 @@ import type {
 
 export const mockEvaluation: IdeaEvaluation = {
   scores: {
-    marketPotential: 72,
+    problemSeverity: 72,
+    marketOpportunity: 65,
     feasibility: 65,
-    competition: 45,
-    uniqueness: 58,
+    differentiation: 58,
   },
   verdict: "Promising with significant challenges",
   explanation: "Your idea addresses a real market need with reasonable demand. However, the competitive landscape is crowded with established players. Technical feasibility is moderate - you'll need specific expertise in AI/ML. Consider focusing on a niche to differentiate from competitors."

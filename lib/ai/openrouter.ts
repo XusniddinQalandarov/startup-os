@@ -62,7 +62,7 @@ export async function callOpenRouter(
       model,
       messages,
       temperature: 0.7,
-      max_tokens: modelType === 'fast' ? 2000 : 4000,
+      max_tokens: modelType === 'fast' ? 1800 : 4000, // Reduced from 2000 for speed
       response_format: { type: 'json_object' }, // Force JSON mode
     }),
   })
@@ -135,12 +135,25 @@ CRITICAL INSTRUCTIONS:
   cleanContent = cleanContent.replace(/```json\n?/g, '')
   cleanContent = cleanContent.replace(/```\n?/g, '')
   
-  // Find the first { and last } to extract just the JSON object
+  // Determine if we should look for object or array
   const firstBrace = cleanContent.indexOf('{')
-  const lastBrace = cleanContent.lastIndexOf('}')
+  const firstBracket = cleanContent.indexOf('[')
+
+  let startIndex = -1
+  let endIndex = -1
+
+  // If array comes first (or no object)
+  if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+    startIndex = firstBracket
+    endIndex = cleanContent.lastIndexOf(']')
+  } else if (firstBrace !== -1) {
+    // defaults to object
+    startIndex = firstBrace
+    endIndex = cleanContent.lastIndexOf('}')
+  }
   
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    cleanContent = cleanContent.substring(firstBrace, lastBrace + 1)
+  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+    cleanContent = cleanContent.substring(startIndex, endIndex + 1)
   }
   
   cleanContent = cleanContent.trim()

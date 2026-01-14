@@ -33,10 +33,10 @@ export interface Task {
 
 export interface IdeaEvaluation {
   scores: {
-    marketPotential: number
-    feasibility: number
-    competition: number
-    uniqueness: number
+    problemSeverity: number    // Is this a "painkiller" or "vitamin"?
+    marketOpportunity: number  // Size × Growth × Accessibility
+    feasibility: number        // Can a small team build this?
+    differentiation: number    // What makes this unique?
   }
   verdict: string
   explanation: string

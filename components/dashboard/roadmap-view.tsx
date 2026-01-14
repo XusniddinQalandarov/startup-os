@@ -30,9 +30,12 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
         setIsGenerating(true)
         setShowTimelineModal(false)
 
+        // Pass undefined for mvpFeatures and techStack when calling standalone
         const result = await generateRoadmap(
             project.id,
             project.idea,
+            undefined,  // mvpFeatures - not available in standalone call
+            undefined,  // techStack - not available in standalone call
             timelineType || selectedTimeline,
             days || customDays
         )
@@ -98,8 +101,8 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
                                     key={key}
                                     onClick={() => setSelectedTimeline(key)}
                                     className={`p-4 rounded-xl border-2 text-left transition-all ${selectedTimeline === key
-                                            ? 'border-indigo-500 bg-indigo-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-indigo-500 bg-indigo-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <span className="text-2xl">{preset.label.split(' ')[0]}</span>
@@ -205,8 +208,8 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
                                 key={key}
                                 onClick={() => setSelectedTimeline(key)}
                                 className={`p-4 rounded-xl border-2 text-left transition-all ${selectedTimeline === key
-                                        ? 'border-indigo-500 bg-indigo-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-indigo-500 bg-indigo-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <span className="text-2xl">{preset.label.split(' ')[0]}</span>
