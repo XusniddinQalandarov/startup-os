@@ -63,6 +63,30 @@ function getVerdict(evaluation: any): { verdict: string; color: string; descript
     return { verdict: 'Kill', color: 'text-red-500', description: 'Too many red flags, consider alternatives' }
 }
 
+const EmptyState = ({ onGenerate }: { onGenerate: () => void }) => (
+    <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Your Final Decision</h3>
+        <p className="text-gray-500 max-w-md mx-auto mb-6">
+            Receive a comprehensive analysis, risk assessment, and a clear Build/Pivot/Kill verdict based on all data.
+        </p>
+        <Button
+            size="lg"
+            onClick={onGenerate}
+            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xl shadow-emerald-200/50 border-0 transform hover:scale-105 transition-all"
+        >
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Generate Verdict
+        </Button>
+    </div>
+)
+
 export function DecisionStageClient({
     project,
     analysisData,
@@ -84,30 +108,6 @@ export function DecisionStageClient({
             setIsGenerating(false)
         }
     }
-
-    const EmptyState = () => (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Your Final Decision</h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">
-                Receive a comprehensive analysis, risk assessment, and a clear Build/Pivot/Kill verdict based on all data.
-            </p>
-            <Button
-                size="lg"
-                onClick={handleGenerateAll}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xl shadow-emerald-200/50 border-0 transform hover:scale-105 transition-all"
-            >
-                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generate Verdict
-            </Button>
-        </div>
-    )
 
     return (
         <PremiumLock isLocked={!isPremium}>
@@ -164,7 +164,7 @@ export function DecisionStageClient({
                                 project={project}
                                 initialAnalysis={analysisData}
                             />
-                        ) : <EmptyState />}
+                        ) : <EmptyState onGenerate={handleGenerateAll} />}
                     </TabPanel>
 
                     <TabPanel isActive={activeTab === 'risks'}>
@@ -231,7 +231,7 @@ export function DecisionStageClient({
                                             </div>
                                         </div>
                                     </div>
-                                ) : <EmptyState />}
+                                ) : <EmptyState onGenerate={handleGenerateAll} />}
                             </div>
                         </div>
                     </TabPanel>
@@ -249,7 +249,7 @@ export function DecisionStageClient({
                                     <p className="text-xl text-gray-700 mb-6">{verdict.description}</p>
                                     <p className="text-gray-600">{evaluation.explanation}</p>
                                 </div>
-                            ) : <EmptyState />}
+                            ) : <EmptyState onGenerate={handleGenerateAll} />}
                         </div>
                     </TabPanel>
                 </StageTabs>

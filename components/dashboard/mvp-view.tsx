@@ -21,7 +21,7 @@ import {
 } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Card, Button } from '@/components/ui'
+import { Card, Button, Modal, Input } from '@/components/ui'
 import { generateMvpScope } from '@/app/actions/ai'
 import { MvpFeature, Startup } from '@/types'
 import { cn } from '@/lib/utils'
@@ -145,6 +145,14 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
     const [activeFeature, setActiveFeature] = useState<MvpFeature | null>(null)
     const [activeColumn, setActiveColumn] = useState<FeaturePriority | null>(null)
 
+    // Add Feature State
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [newFeature, setNewFeature] = useState<{ title: string; description: string; priority: FeaturePriority }>({
+        title: '',
+        description: '',
+        priority: 'must_have'
+    })
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -163,6 +171,21 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
             setFeatures(result)
         }
         setIsGenerating(false)
+    }
+
+    const handleAddFeature = () => {
+        if (!newFeature.title.trim()) return
+
+        const feature: MvpFeature = {
+            id: `custom-${Date.now()}`,
+            title: newFeature.title,
+            description: newFeature.description,
+            priority: newFeature.priority
+        }
+
+        setFeatures(prev => prev ? [...prev, feature] : [feature])
+        setShowAddModal(false)
+        setNewFeature({ title: '', description: '', priority: 'must_have' })
     }
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -260,9 +283,17 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
                     <h1 className="text-2xl font-semibold text-gray-900">MVP Scope</h1>
                     <p className="text-gray-600 mt-1">Drag features between columns to reprioritize</p>
                 </div>
-                <Button variant="secondary" onClick={handleGenerate} isLoading={isGenerating}>
-                    Regenerate
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setShowAddModal(true)}>
+                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Feature
+                    </Button>
+                    <Button variant="secondary" onClick={handleGenerate} isLoading={isGenerating}>
+                        Regenerate
+                    </Button>
+                </div>
             </div>
 
             <DndContext
@@ -291,6 +322,49 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
                     )}
                 </DragOverlay>
             </DndContext>
+
+            <Modal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                title="Add MVP Feature"
+                footer={
+                    <Button onClick={handleAddFeature} disabled={!newFeature.title.trim()}>
+                        Add Feature
+                    </Button>
+                }
+            >
+                <div className="space-y-4">
+                    <Input
+                        label="Feature Title"
+                        placeholder="e.g. User Authentication"
+                        value={newFeature.title}
+                        onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
+                    />
+
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Description</label>
+                        <textarea
+                            className="flex w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
+                            placeholder="Describe what this feature does..."
+                            value={newFeature.description}
+                            onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-gray-700">Priority</label>
+                        <select
+                            className="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={newFeature.priority}
+                            onChange={(e) => setNewFeature({ ...newFeature, priority: e.target.value as FeaturePriority })}
+                        >
+                            <option value="must_have">Must Have</option>
+                            <option value="later">Later</option>
+                            <option value="not_now">Not Now</option>
+                        </select>
+                    </div>
+                </div>
+            </Modal>
         </div>
     )
 }

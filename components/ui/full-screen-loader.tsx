@@ -12,7 +12,7 @@ export function FullScreenLoader({ isLoading, message = 'Generating analysis...'
     if (!isLoading) return null
 
     return (
-        <div className="fixed inset-0 z-[1000] bg-white/90 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9999] h-screen w-screen bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-300">
             <div className="relative mb-8">
                 {/* Glowing orb background */}
                 <div className="absolute inset-0 bg-indigo-500/20 blur-3xl rounded-full" />

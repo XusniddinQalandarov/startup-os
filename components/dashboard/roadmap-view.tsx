@@ -26,6 +26,8 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
     const [selectedTimeline, setSelectedTimeline] = useState<TimelineType>('standard')
     const [customDays, setCustomDays] = useState(30)
 
+    const [editingPhase, setEditingPhase] = useState<RoadmapPhase | null>(null)
+
     const handleGenerate = async (timelineType?: TimelineType, days?: number) => {
         setIsGenerating(true)
         setShowTimelineModal(false)
@@ -43,6 +45,12 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
             setRoadmap(result)
         }
         setIsGenerating(false)
+    }
+
+    const handleSavePhase = () => {
+        if (!editingPhase) return
+        setRoadmap(prev => prev?.map(p => p.id === editingPhase.id ? editingPhase : p) || null)
+        setEditingPhase(null)
     }
 
     const getTotalWeeks = () => {
@@ -152,13 +160,24 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
             {/* Timeline Visualization */}
             <div className="relative border-l-2 border-indigo-200 ml-4 space-y-10 py-4">
                 {roadmap.map((phase, index) => (
-                    <div key={phase.id} className="relative pl-8">
+                    <div key={phase.id} className="relative pl-8 group/phase">
                         {/* Dot */}
                         <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-indigo-600 border-4 border-white shadow-md" />
 
                         <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <h3 className="text-lg font-bold text-gray-900">{phase.name}</h3>
+                                <div className="flex items-center gap-3">
+                                    <h3 className="text-lg font-bold text-gray-900">{phase.name}</h3>
+                                    <button
+                                        onClick={() => setEditingPhase(phase)}
+                                        className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors opacity-0 group-hover/phase:opacity-100"
+                                        title="Edit Phase"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </button>
+                                </div>
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-700">
                                     {phase.durationWeeks < 1
                                         ? `${Math.round(phase.durationWeeks * 7)} days`
@@ -232,6 +251,76 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
                         </div>
                     )}
                 </div>
+            </Modal>
+
+            {/* Edit Phase Modal */}
+            <Modal
+                isOpen={!!editingPhase}
+                onClose={() => setEditingPhase(null)}
+                title="Edit Phase Details"
+                footer={
+                    <Button onClick={handleSavePhase}>
+                        Save Changes
+                    </Button>
+                }
+            >
+                {editingPhase && (
+                    <div className="space-y-6">
+                        <Input
+                            label="Phase Name"
+                            value={editingPhase.name}
+                            onChange={(e) => setEditingPhase({ ...editingPhase, name: e.target.value })}
+                        />
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700">Description</label>
+                            <textarea
+                                className="flex w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+                                value={editingPhase.description}
+                                onChange={(e) => setEditingPhase({ ...editingPhase, description: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-gray-700">Deliverables</label>
+                                <button
+                                    onClick={() => setEditingPhase({ ...editingPhase, tasks: [...editingPhase.tasks, ''] })}
+                                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                                >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Task
+                                </button>
+                            </div>
+                            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                                {editingPhase.tasks.map((task, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <Input
+                                            value={task}
+                                            onChange={(e) => {
+                                                const newTasks = [...editingPhase.tasks]
+                                                newTasks[i] = e.target.value
+                                                setEditingPhase({ ...editingPhase, tasks: newTasks })
+                                            }}
+                                            placeholder="Enter task detail..."
+                                            className="mb-0"
+                                        />
+                                        <button
+                                            onClick={() => setEditingPhase({ ...editingPhase, tasks: editingPhase.tasks.filter((_, idx) => idx !== i) })}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     )
