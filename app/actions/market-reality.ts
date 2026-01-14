@@ -9,20 +9,36 @@ export async function generateMarketReality(
     targetUsers?: string,
     businessType?: string
 ) {
-    console.log(`[Market Reality] Starting full generation for: "${idea}"`)
+    console.log(`[Market Reality] Starting generation for: "${idea}"`)
     
     try {
-        // Step 1: Analyze competitors first (provides context for differentiation)
-        console.log('[Market Reality] Step 1: Analyzing competitors...')
-        const competitors = await analyzeCompetitors(startupId, idea, targetUsers)
+        // Run both analyses - use allSettled so one failure doesn't block both
+        const results = await Promise.allSettled([
+            analyzeCompetitors(startupId, idea, targetUsers),
+            generateDifferentiationAnalysis(startupId, idea, null, targetUsers)
+        ])
         
-        // Step 2: Generate differentiation analysis using competitor insights
-        console.log('[Market Reality] Step 2: Generating differentiation analysis...')
-        await generateDifferentiationAnalysis(startupId, idea, competitors, targetUsers)
-
-        console.log('[Market Reality] Generation complete')
+        const [competitorsResult, differentiationResult] = results
+        
+        // Log results
+        if (competitorsResult.status === 'fulfilled') {
+            console.log('[Market Reality] Competitors: Success')
+        } else {
+            console.error('[Market Reality] Competitors: Failed -', competitorsResult.reason)
+        }
+        
+        if (differentiationResult.status === 'fulfilled') {
+            console.log('[Market Reality] Differentiation: Success')
+        } else {
+            console.error('[Market Reality] Differentiation: Failed -', differentiationResult.reason)
+        }
+        
+        const anySuccess = results.some(r => r.status === 'fulfilled')
+        
         revalidatePath(`/dashboard/${startupId}/market`)
-        return { success: true }
+        console.log(`[Market Reality] Complete. Success: ${anySuccess}`)
+        
+        return { success: anySuccess }
     } catch (error) {
         console.error('[Market Reality] Generation failed:', error)
         return { success: false, error: 'Failed to generate market analysis' }

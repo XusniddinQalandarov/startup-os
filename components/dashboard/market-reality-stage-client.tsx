@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { PremiumLock } from '@/components/ui/premium-lock'
@@ -69,6 +70,7 @@ export function MarketRealityStageClient({
     differentiationData,
     isPremium = false // Default to locked
 }: MarketRealityStageClientProps) {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState('competitors')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
@@ -86,10 +88,10 @@ export function MarketRealityStageClient({
         setIsGenerating(true)
         try {
             await generateMarketReality(project.id, project.idea, project.targetUsers, project.businessType)
-            // Implicit revalidatePath will handle data refresh
-            setIsGenerating(false)
+            router.refresh()
         } catch (error) {
             console.error('Generation failed', error)
+        } finally {
             setIsGenerating(false)
         }
     }

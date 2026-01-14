@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Card, Button } from '@/components/ui'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { analyzeCompetitors } from '@/app/actions/ai'
 import type { Startup } from '@/types'
 
@@ -46,7 +47,7 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
             }
         } catch (err) {
             console.error('Competitor analysis error:', err)
-            setError('An unexpected error occurred')
+            setError('Analysis timed out or failed. Please try again.')
         } finally {
             setIsAnalyzing(false)
         }
@@ -55,6 +56,8 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
     if (!analysis) {
         return (
             <div className="space-y-6">
+                <FullScreenLoader isLoading={isAnalyzing} message="Analyzing competitors and market landscape..." />
+
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Competitor Analysis</h1>
                     <p className="text-gray-500 mt-1">Discover who you&apos;re up against in the market</p>
@@ -71,14 +74,9 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
                         <p className="text-gray-500 mb-8 max-w-md mx-auto">
                             We&apos;ll search the web to find competitors and analyze their strengths and weaknesses using advanced AI.
                         </p>
-                        <Button onClick={handleAnalyze} isLoading={isAnalyzing} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-lg shadow-indigo-200">
-                            {isAnalyzing ? 'Analyzing Market...' : 'Start Analysis'}
+                        <Button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-0 shadow-lg shadow-indigo-200">
+                            Start Analysis
                         </Button>
-                        {isAnalyzing && (
-                            <p className="text-xs text-gray-400 mt-6 animate-pulse">
-                                Scanning market landscape... This may take up to a minute.
-                            </p>
-                        )}
                         {error && (
                             <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-medium">
                                 {error}
@@ -112,6 +110,8 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
 
     return (
         <div className="space-y-8">
+            <FullScreenLoader isLoading={isAnalyzing} message="Refreshing competitor analysis..." />
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Market Intelligence</h1>
@@ -120,10 +120,10 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
                 <button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing}
-                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all disabled:opacity-50"
                     title="Refresh Analysis"
                 >
-                    <svg className={`w-5 h-5 ${isAnalyzing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                 </button>

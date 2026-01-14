@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Card, Button, Modal, Input } from '@/components/ui'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { generateRoadmap } from '@/app/actions/ai'
 import { RoadmapPhase, Startup } from '@/types'
 
@@ -12,11 +13,36 @@ interface RoadmapViewProps {
 
 type TimelineType = 'hackathon' | 'sprint' | 'standard' | 'custom'
 
+// Timeline preset icons as JSX (rendered in the modal)
+const timelineIcons: Record<TimelineType, React.ReactNode> = {
+    hackathon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+    ),
+    sprint: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    ),
+    standard: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+    ),
+    custom: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    ),
+}
+
 const timelinePresets: Record<TimelineType, { label: string; description: string; totalWeeks: number }> = {
-    hackathon: { label: '🚀 Hackathon', description: '24-48 hours', totalWeeks: 0.1 },
-    sprint: { label: '⚡ Sprint', description: '1-2 weeks', totalWeeks: 2 },
-    standard: { label: '📅 Standard', description: '8-12 weeks', totalWeeks: 10 },
-    custom: { label: '⚙️ Custom', description: 'Set your own deadline', totalWeeks: 0 },
+    hackathon: { label: 'Hackathon', description: '24-48 hours', totalWeeks: 0.1 },
+    sprint: { label: 'Sprint', description: '1-2 weeks', totalWeeks: 2 },
+    standard: { label: 'Standard', description: '8-12 weeks', totalWeeks: 10 },
+    custom: { label: 'Custom', description: 'Set your own deadline', totalWeeks: 0 },
 }
 
 export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
@@ -113,8 +139,10 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
                                         : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
-                                    <span className="text-2xl">{preset.label.split(' ')[0]}</span>
-                                    <h3 className="font-semibold text-gray-900 mt-1">{preset.label.split(' ')[1]}</h3>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${selectedTimeline === key ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                                        {timelineIcons[key]}
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900">{preset.label}</h3>
                                     <p className="text-sm text-gray-500">{preset.description}</p>
                                 </button>
                             ))}
@@ -142,6 +170,8 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
 
     return (
         <div className="space-y-6">
+            <FullScreenLoader isLoading={isGenerating} message="Generating roadmap with your timeline..." />
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">Roadmap</h1>
@@ -231,8 +261,10 @@ export function RoadmapView({ project, initialRoadmap }: RoadmapViewProps) {
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
-                                <span className="text-2xl">{preset.label.split(' ')[0]}</span>
-                                <h3 className="font-semibold text-gray-900 mt-1">{preset.label.split(' ')[1]}</h3>
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${selectedTimeline === key ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}>
+                                    {timelineIcons[key]}
+                                </div>
+                                <h3 className="font-semibold text-gray-900">{preset.label}</h3>
                                 <p className="text-sm text-gray-500">{preset.description}</p>
                             </button>
                         ))}

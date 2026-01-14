@@ -14,28 +14,44 @@ export async function generateBuildPlan(
     idea: string,
     founderType?: string
 ) {
-    console.log(`[Build Plan] Starting sequential generation for: "${idea}"`)
+    console.log(`[Build Plan] Starting optimized generation for: "${idea}"`)
     
     try {
-        // Step 1: Define MVP Scope first (what to build)
-        console.log('[Build Plan] Step 1: Generating MVP scope...')
-        const mvpFeatures = await generateMvpScope(startupId, idea)
+        // Phase 1: Generate MVP and Tech Stack in PARALLEL (both only need the idea)
+        console.log('[Build Plan] Phase 1: Generating MVP scope and Tech stack in parallel...')
+        const [mvpResult, techResult] = await Promise.allSettled([
+            generateMvpScope(startupId, idea),
+            generateTechStack(startupId, idea, founderType, null) // Tech doesn't strictly need MVP
+        ])
         
-        // Step 2: Choose Tech Stack based on MVP requirements
-        console.log('[Build Plan] Step 2: Generating tech stack based on MVP...')
-        const techStack = await generateTechStack(startupId, idea, founderType, mvpFeatures)
+        const mvpFeatures = mvpResult.status === 'fulfilled' ? mvpResult.value : null
+        const techStack = techResult.status === 'fulfilled' ? techResult.value : null
         
-        // Step 3: Create Roadmap based on MVP + Tech Stack
-        console.log('[Build Plan] Step 3: Generating roadmap based on MVP & tech...')
-        const roadmap = await generateRoadmap(startupId, idea, mvpFeatures, techStack)
+        console.log(`[Build Plan] Phase 1 done. MVP: ${mvpResult.status}, Tech: ${techResult.status}`)
         
-        // Step 4: Break down into Tasks based on Roadmap phases
-        console.log('[Build Plan] Step 4: Generating tasks based on roadmap...')
-        await generateTasks(startupId, idea, mvpFeatures, roadmap)
-
-        console.log('[Build Plan] Generation complete')
+        // Phase 2: Generate Roadmap and Tasks in PARALLEL
+        console.log('[Build Plan] Phase 2: Generating Roadmap and Tasks in parallel...')
+        const [roadmapResult, tasksResult] = await Promise.allSettled([
+            generateRoadmap(startupId, idea, mvpFeatures, techStack),
+            generateTasks(startupId, idea, mvpFeatures, null) // Tasks can start from MVP
+        ])
+        
+        console.log(`[Build Plan] Phase 2 done. Roadmap: ${roadmapResult.status}, Tasks: ${tasksResult.status}`)
+        
+        // Log any failures
+        const allResults = [mvpResult, techResult, roadmapResult, tasksResult]
+        const labels = ['MVP', 'TechStack', 'Roadmap', 'Tasks']
+        allResults.forEach((r, i) => {
+            if (r.status === 'rejected') {
+                console.error(`[Build Plan] ${labels[i]} failed:`, r.reason)
+            }
+        })
+        
+        const anySuccess = allResults.some(r => r.status === 'fulfilled')
+        
+        console.log(`[Build Plan] Complete. Success: ${anySuccess}`)
         revalidatePath(`/dashboard/${startupId}/build`)
-        return { success: true }
+        return { success: anySuccess }
     } catch (error) {
         console.error('[Build Plan] Generation failed:', error)
         return { success: false, error: 'Failed to generate build plan' }

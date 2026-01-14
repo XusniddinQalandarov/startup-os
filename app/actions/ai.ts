@@ -759,53 +759,29 @@ export async function analyzeCompetitors(
   // Build prompt - works even without search results
   const hasSearchResults = searchData.results.length > 0
   
-  const prompt = `Analyze competitors for this startup idea${hasSearchResults ? ' based on the web search results below' : ''}.
+  // Simplified prompt for faster, more reliable responses
+  const prompt = `Analyze competitors for: "${idea}"
+${targetUsers ? `Target: ${targetUsers}` : ''}
+${hasSearchResults ? `\nSearch data:\n${searchData.context.substring(0, 1500)}` : ''}
 
-IDEA: ${idea}
-${targetUsers ? `TARGET USERS: ${targetUsers}` : ''}
-
-${hasSearchResults ? `WEB SEARCH RESULTS:\n${searchData.context}` : 'No web search results available. Use your general knowledge about this market.'}
-
-Identify 3-5 competitors in this space. For each competitor provide:
-1. Company name ${hasSearchResults ? '(extract from search results)' : '(well-known companies)'}
-2. Website URL if available
-3. Brief description of what they do
-4. 2-3 key strengths
-5. 2-3 key weaknesses
-6. Pricing information if known
-7. Market position
-
-Also provide:
-- Market overview (2-3 sentences about the competitive landscape)
-- 3-4 opportunities for differentiation
-- 3-4 threats to be aware of
-
-CRITICAL: Return ONLY a valid JSON object matching this exact structure (no markdown, no code blocks, just pure JSON):
-
+Return JSON with EXACTLY 3 competitors:
 {
   "competitors": [
-    {
-      "name": "Company Name",
-      "website": "https://example.com",
-      "description": "What they do in one sentence",
-      "strengths": ["Strength 1", "Strength 2", "Strength 3"],
-      "weaknesses": ["Weakness 1", "Weakness 2"],
-      "pricing": "Pricing model or Unknown",
-      "marketShare": "Market position (e.g., Market leader, Growing startup)"
-    }
+    {"name":"Company","website":"https://...","description":"One sentence","strengths":["str1","str2"],"weaknesses":["weak1","weak2"],"pricing":"Model","marketShare":"Position"}
   ],
-  "marketOverview": "2-3 sentences about the competitive landscape",
-  "opportunities": ["Opportunity 1", "Opportunity 2", "Opportunity 3"],
-  "threats": ["Threat 1", "Threat 2", "Threat 3"]
+  "marketOverview": "Two sentences max",
+  "opportunities": ["opp1","opp2","opp3"],
+  "threats": ["threat1","threat2","threat3"]
 }`
 
   try {
     console.log('[Competitors] Calling AI for analysis...')
     
     const analysis = await callOpenRouterJSON<CompetitorAnalysis>(
-      'You are a market research analyst. Return ONLY valid JSON with no additional text, markdown, or code blocks. Analyze the market and provide competitor insights.',
+      'Market analyst. Return ONLY valid JSON. Be concise.',
       prompt,
-      'fast'
+      'fast',
+      2500 // Reduced - 3 competitors need less tokens
     )
 
     console.log('[Competitors] AI response received')

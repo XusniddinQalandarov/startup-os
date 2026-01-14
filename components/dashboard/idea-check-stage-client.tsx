@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { OverviewView } from '@/components/dashboard/overview-view'
@@ -89,6 +90,7 @@ export function IdeaCheckStageClient({
     questions,
     problemData
 }: IdeaCheckStageClientProps) {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState('problem')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
@@ -107,11 +109,12 @@ export function IdeaCheckStageClient({
         setIsGenerating(true)
         try {
             await generateIdeaCheck(project.id, project.idea, project.targetUsers, project.businessType)
-            // No need to reset state manually as revalidatePath will refetch data
-            // But we keep loader for smoother UX until new props arrive (implicitly handled by React)
-            setIsGenerating(false)
+            // Force router to refresh and fetch new data
+            router.refresh()
         } catch (error) {
             console.error('Generation failed', error)
+        } finally {
+            // Always ensure loading state is cleared
             setIsGenerating(false)
         }
     }
