@@ -179,7 +179,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
             {/* Sidebar - Desktop: always visible, Mobile: slide-in drawer */}
             <div
                 className={cn(
-                    "fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-30 md:z-0",
+                    "fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-30 md:z-10",
                     "transition-transform duration-300 ease-out",
                     "md:translate-x-0", // Always visible on desktop
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-[calc(100%+2rem)]" // Slide in/out on mobile
