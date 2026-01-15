@@ -81,11 +81,11 @@ export function AnimatedBackground() {
                 style={{ animation: 'pulse 6s ease-in-out infinite 1s' }}
             />
 
-            {/* Floating Icons - using CSS animations instead of GSAP */}
+            {/* Floating Icons - subtle movement, consistent colors */}
             {iconPositions.map((pos, index) => (
                 <div
                     key={index}
-                    className="absolute text-purple-500/35 floating-icon"
+                    className="absolute text-purple-300/30 floating-icon"
                     style={{
                         left: `${pos.x}%`,
                         top: `${pos.y}%`,
@@ -99,7 +99,7 @@ export function AnimatedBackground() {
                 </div>
             ))}
 
-            {/* CSS Keyframes - injected via style tag for better performance */}
+            {/* CSS Keyframes */}
             <style jsx>{`
                 .floating-icon {
                     animation: floatIcon ease-in-out infinite;
@@ -107,12 +107,10 @@ export function AnimatedBackground() {
                 
                 @keyframes floatIcon {
                     0%, 100% {
-                        transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
-                        opacity: 0.25;
+                        transform: translate(-50%, -50%) translateY(0px);
                     }
                     50% {
-                        transform: translate(-50%, -50%) translateY(-30px) rotate(8deg);
-                        opacity: 0.45;
+                        transform: translate(-50%, -50%) translateY(-20px);
                     }
                 }
                 

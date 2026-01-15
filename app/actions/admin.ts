@@ -18,7 +18,8 @@ export async function isAdmin(): Promise<boolean> {
     return user?.email === ADMIN_EMAIL
 }
 
-// Get all users from auth.users (requires service role)
+
+// Get all stats (requires service role for full access)
 export const getAdminStats = cache(async function getAdminStats() {
     const supabase = await createClient()
     
@@ -28,38 +29,41 @@ export const getAdminStats = cache(async function getAdminStats() {
         return null
     }
 
+    // Use service client to bypass RLS and get ALL data
+    const serviceClient = createServiceClient()
+
     // Get total projects count
-    const { count: totalProjects } = await supabase
+    const { count: totalProjects } = await serviceClient
         .from('startups')
         .select('*', { count: 'exact', head: true })
 
     // Get AI outputs count
-    const { count: totalAiOutputs } = await supabase
+    const { count: totalAiOutputs } = await serviceClient
         .from('ai_outputs')
         .select('*', { count: 'exact', head: true })
 
     // Get tasks count
-    const { count: totalTasks } = await supabase
+    const { count: totalTasks } = await serviceClient
         .from('tasks')
         .select('*', { count: 'exact', head: true })
 
     // Get customer questions count
-    const { count: totalQuestions } = await supabase
+    const { count: totalQuestions } = await serviceClient
         .from('customer_questions')
         .select('*', { count: 'exact', head: true })
 
     // Get competitor analyses count
-    const { count: totalCompetitorAnalyses } = await supabase
+    const { count: totalCompetitorAnalyses } = await serviceClient
         .from('competitor_analyses')
         .select('*', { count: 'exact', head: true })
 
     // Get project analyses count
-    const { count: totalProjectAnalyses } = await supabase
+    const { count: totalProjectAnalyses } = await serviceClient
         .from('project_analyses')
         .select('*', { count: 'exact', head: true })
 
     // Get costs count
-    const { count: totalCosts } = await supabase
+    const { count: totalCosts } = await serviceClient
         .from('costs')
         .select('*', { count: 'exact', head: true })
 
@@ -67,7 +71,7 @@ export const getAdminStats = cache(async function getAdminStats() {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     
-    const { data: recentProjects } = await supabase
+    const { data: recentProjects } = await serviceClient
         .from('startups')
         .select('created_at')
         .gte('created_at', thirtyDaysAgo.toISOString())
@@ -85,7 +89,7 @@ export const getAdminStats = cache(async function getAdminStats() {
     }
 })
 
-// Get all projects with user info
+// Get all projects with user info (using service role for full access)
 export const getAllProjects = cache(async function getAllProjects() {
     const supabase = await createClient()
     
@@ -95,7 +99,10 @@ export const getAllProjects = cache(async function getAllProjects() {
         return []
     }
 
-    const { data, error } = await supabase
+    // Use service client to bypass RLS
+    const serviceClient = createServiceClient()
+
+    const { data, error } = await serviceClient
         .from('startups')
         .select('*')
         .order('created_at', { ascending: false })

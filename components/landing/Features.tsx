@@ -91,15 +91,15 @@ export function Features() {
 
             // Cards stagger animation
             cardsRef.current.forEach((card, index) => {
-                gsap.from(card, {
+                gsap.to(card, {
                     scrollTrigger: {
                         trigger: card,
                         start: 'top 85%',
                         toggleActions: 'play none none reverse'
                     },
-                    y: 60,
-                    opacity: 0,
-                    scale: 0.95,
+                    y: 0,
+                    opacity: 1,
+                    scale: 1,
                     duration: 0.8,
                     delay: index * 0.08,
                     ease: 'power3.out'
@@ -132,11 +132,11 @@ export function Features() {
                         <div
                             key={feature.title}
                             ref={el => { if (el) cardsRef.current[index] = el }}
-                            className={`${feature.gridClass} group`}
+                            className={`${feature.gridClass} group opacity-0 translate-y-12 scale-95`}
                         >
                             <div className="relative h-full bg-gray-50/50 rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:shadow-indigo-100/50 hover:border-indigo-100 transition-all duration-500 hover:-translate-y-1 overflow-hidden">
                                 {/* Big background icon - bottom right */}
-                                <div className="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-100 group-hover:text-indigo-200 opacity-50 group-hover:opacity-70 group-hover:scale-110 transition-all duration-500">
+                                <div className="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-200 group-hover:scale-110 transition-transform duration-500">
                                     {feature.icon}
                                 </div>
 

@@ -69,14 +69,14 @@ export function HowItWorks() {
             })
 
             stepsRef.current.forEach((step, index) => {
-                gsap.from(step, {
+                gsap.to(step, {
                     scrollTrigger: {
                         trigger: step,
                         start: 'top 85%',
                         toggleActions: 'play none none reverse'
                     },
-                    y: 60,
-                    opacity: 0,
+                    y: 0,
+                    opacity: 1,
                     duration: 0.8,
                     delay: index * 0.15,
                     ease: 'power3.out'
@@ -112,7 +112,7 @@ export function HowItWorks() {
                         <div
                             key={step.number}
                             ref={el => { if (el) stepsRef.current[index] = el }}
-                            className="relative group"
+                            className="relative group opacity-0 translate-y-12"
                         >
                             <div className="relative bg-gray-50/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg shadow-gray-100/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-500 hover:-translate-y-1 h-full overflow-hidden">
                                 {/* Step number - top right */}
@@ -121,7 +121,7 @@ export function HowItWorks() {
                                 </span>
 
                                 {/* Big background icon - bottom right */}
-                                <div className="absolute -bottom-4 -right-4 w-32 h-32 text-indigo-100 group-hover:text-indigo-200 transition-colors opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-500">
+                                <div className="absolute -bottom-4 -right-4 w-32 h-32 text-indigo-200 group-hover:scale-110 transition-transform duration-500">
                                     {step.icon}
                                 </div>
 
