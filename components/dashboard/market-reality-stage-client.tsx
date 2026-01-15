@@ -88,12 +88,10 @@ export function MarketRealityStageClient({
         setIsGenerating(true)
         try {
             await generateMarketReality(project.id, project.idea, project.targetUsers, project.businessType)
-            router.refresh()
-            // Small delay to ensure UI renders before hiding loader
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // Hard reload to guarantee fresh data is displayed
+            window.location.reload()
         } catch (error) {
             console.error('Generation failed', error)
-        } finally {
             setIsGenerating(false)
         }
     }
@@ -126,8 +124,8 @@ export function MarketRealityStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Market Reality</h1>
-                            <p className="text-sm text-gray-500">Who else exists and how hard is this market?</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Market Reality</h1>
+                            <p className="text-xs sm:text-sm text-gray-500">Who else exists and how hard is this market?</p>
                         </div>
                     </div>
 

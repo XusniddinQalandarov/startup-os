@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Startup } from '@/types'
 import Link from 'next/link'
@@ -106,6 +107,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ projects, isPremium }: SidebarProps) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const pathname = usePathname()
     const params = useParams()
     const currentProjectId = params?.projectId as string | undefined
@@ -136,25 +138,76 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
 
     const activeStage = getActiveStage()
 
+    // Close mobile menu when navigating
+    const handleNavClick = () => {
+        setIsMobileMenuOpen(false)
+    }
+
     return (
         <>
-            {/* Gradient border wrapper */}
+            {/* Mobile hamburger button */}
+            <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden fixed top-4 left-4 z-40 p-3 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100"
+                aria-label="Open menu"
+            >
+                <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+
+            {/* Mobile header bar with project name */}
+            {currentProject && (
+                <div className="md:hidden fixed top-4 left-16 right-4 z-30">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100 px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Image src="/idey.webp" alt="ideY" width={24} height={18} className="w-auto h-5 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-900 truncate">{currentProject.name}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile overlay backdrop */}
+            {isMobileMenuOpen && (
+                <div
+                    className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar - Desktop: always visible, Mobile: slide-in drawer */}
             <div
-                className="fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-30"
+                className={cn(
+                    "fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-50",
+                    "transition-transform duration-300 ease-out",
+                    "md:translate-x-0", // Always visible on desktop
+                    isMobileMenuOpen ? "translate-x-0" : "-translate-x-[calc(100%+2rem)]" // Slide in/out on mobile
+                )}
             >
                 <aside className="h-full w-full bg-white/95 backdrop-blur-xl rounded-[22px] shadow-xl shadow-purple-200/30 flex flex-col overflow-hidden border border-purple-100/50">
-                    {/* Logo */}
-                    <div className="p-4">
-                        <Link href="/" className="flex items-center gap-2 px-1">
+                    {/* Logo + Close button on mobile */}
+                    <div className="p-4 flex items-center justify-between">
+                        <Link href="/" className="flex items-center gap-2 px-1" onClick={handleNavClick}>
                             <Image src="/idey.webp" alt="ideY Logo" width={32} height={24} className="w-auto h-6" />
                             <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">ideY</span>
                         </Link>
+                        {/* Close button - mobile only */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                            aria-label="Close menu"
+                        >
+                            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     {/* Current project */}
                     {currentProject && (
                         <div className="px-4 pb-4">
-                            <Link href="/profile" className="block group">
+                            <Link href="/profile" className="block group" onClick={handleNavClick}>
                                 <div className="p-2.5 rounded-xl bg-gray-50/80 hover:bg-gray-100/80 transition-colors border border-gray-100">
                                     <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Project</p>
                                     <p className="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
@@ -167,7 +220,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
 
                     {/* Stage navigation */}
                     {currentProjectId && (
-                        <nav className="flex-1 px-3 space-y-1">
+                        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
                             <p className="px-3 py-2 text-[10px] text-gray-400 uppercase tracking-wider font-medium">Journey</p>
                             {stages.map((stage, index) => {
                                 const isActive = activeStage === stage.id
@@ -177,6 +230,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
                                     <Link
                                         key={stage.id}
                                         href={stage.href(currentProjectId)}
+                                        onClick={handleNavClick}
                                         className={cn(
                                             "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200",
                                             isActive
@@ -203,6 +257,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
                     <div className="p-3 border-t border-gray-100/50 space-y-1">
                         <Link
                             href="/profile"
+                            onClick={handleNavClick}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -215,7 +270,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
                                 {isPremium ? 'Premium Plan' : 'Free Plan'}
                             </span>
                             {!isPremium && (
-                                <Link href="/profile" className="text-[10px] text-indigo-500 hover:text-indigo-600 font-medium">
+                                <Link href="/profile" onClick={handleNavClick} className="text-[10px] text-indigo-500 hover:text-indigo-600 font-medium">
                                     Upgrade
                                 </Link>
                             )}

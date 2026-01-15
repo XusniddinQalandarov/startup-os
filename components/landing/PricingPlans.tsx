@@ -130,7 +130,7 @@ export function PricingPlans() {
                     <span className="inline-block px-4 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-full mb-4">
                         Pricing Plans
                     </span>
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                         Simple, transparent
                         <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent"> pricing</span>
                     </h2>
@@ -167,7 +167,7 @@ export function PricingPlans() {
                 </div>
 
                 {/* Pricing Cards */}
-                <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                     {plans.map((plan, index) => (
                         <div
                             key={plan.name}

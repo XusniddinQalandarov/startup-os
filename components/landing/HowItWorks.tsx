@@ -97,7 +97,7 @@ export function HowItWorks() {
                     <span className="inline-block px-4 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-full mb-4">
                         How It Works
                     </span>
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                         From idea to execution in
                         <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent"> 4 simple steps</span>
                     </h2>

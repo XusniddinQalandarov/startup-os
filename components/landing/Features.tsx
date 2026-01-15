@@ -118,7 +118,7 @@ export function Features() {
                     <span className="inline-block px-4 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-full mb-4">
                         Platform Features
                     </span>
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                         Everything you need to
                         <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent"> build & ship</span>
                     </h2>

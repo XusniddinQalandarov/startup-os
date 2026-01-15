@@ -91,18 +91,16 @@ export function BuildPlanStageClient({
         // Safety timeout - clear loading after 90s max (Build Plan has 4 operations)
         const safetyTimeout = setTimeout(() => {
             console.warn('[Build Plan] Safety timeout triggered')
-            setIsGenerating(false)
-            router.refresh()
+            window.location.reload()
         }, 90000)
 
         try {
             await generateBuildPlan(project.id, project.idea, project.founderType)
-            router.refresh()
-            // Small delay to ensure UI renders before hiding loader
-            await new Promise(resolve => setTimeout(resolve, 500))
+            clearTimeout(safetyTimeout)
+            // Hard reload to guarantee fresh data is displayed
+            window.location.reload()
         } catch (error) {
             console.error('Generation failed', error)
-        } finally {
             clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
@@ -138,7 +136,7 @@ export function BuildPlanStageClient({
                 <FullScreenLoader isLoading={isGenerating} message="Scoping MVP, choosing tech stack, and planning roadmap..." />
 
                 {/* Stage Header with Summary */}
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-violet-200/50">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,13 +144,13 @@ export function BuildPlanStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Build Plan</h1>
-                            <p className="text-sm text-gray-500">What does it take to build an MVP?</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Build Plan</h1>
+                            <p className="text-xs sm:text-sm text-gray-500">What does it take to build an MVP?</p>
                         </div>
                     </div>
 
                     {/* Actions & Summary */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                         {!hasData && (
                             <Button
                                 onClick={handleGenerateAll}

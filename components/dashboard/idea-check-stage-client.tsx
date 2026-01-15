@@ -126,7 +126,7 @@ export function IdeaCheckStageClient({
         // Safety timeout - just in case everything hangs
         const safetyTimeout = setTimeout(() => {
             setIsGenerating(false)
-            router.refresh()
+            window.location.reload()
         }, 60000) // Increased to 60s to allow all actions to complete
 
         try {
@@ -144,18 +144,15 @@ export function IdeaCheckStageClient({
 
             clearTimeout(safetyTimeout)
 
-            // Refresh to fetch all new data
-            router.refresh()
-
-            // Small delay to ensure UI renders before hiding loader
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // Hard reload to guarantee fresh data is displayed
+            window.location.reload()
 
         } catch (error) {
             console.error('Generation failed', error)
             clearTimeout(safetyTimeout)
-        } finally {
             setIsGenerating(false)
         }
+        // Note: No finally block needed - page reloads on success
     }
 
     const handleSaveProblem = useCallback(async (newContent: string) => {
@@ -177,7 +174,7 @@ export function IdeaCheckStageClient({
             <FullScreenLoader isLoading={isGenerating} message="Analyzing idea, generating questions, and calculating score..." />
 
             {/* Stage Header with Summary */}
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                     {/* ... icon & title ... */}
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-200/50">
@@ -186,13 +183,13 @@ export function IdeaCheckStageClient({
                         </svg>
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Idea Check</h1>
-                        <p className="text-sm text-gray-500">Is this a real problem worth solving?</p>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Idea Check</h1>
+                        <p className="text-xs sm:text-sm text-gray-500">Is this a real problem worth solving?</p>
                     </div>
                 </div>
 
                 {/* Actions & Summary */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     {/* Generate / Regenerate Button */}
                     <Button
                         onClick={handleGenerateAll}

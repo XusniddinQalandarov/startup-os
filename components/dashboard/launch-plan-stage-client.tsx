@@ -90,18 +90,16 @@ export function LaunchPlanStageClient({
         // Safety timeout - clear loading after 60s max
         const safetyTimeout = setTimeout(() => {
             console.warn('[Launch Plan] Safety timeout triggered')
-            setIsGenerating(false)
-            router.refresh()
+            window.location.reload()
         }, 60000)
 
         try {
             await generateLaunchPlan(project.id, project.idea, project.targetUsers, project.businessType)
-            router.refresh()
-            // Small delay to ensure UI renders before hiding loader
-            await new Promise(resolve => setTimeout(resolve, 500))
+            clearTimeout(safetyTimeout)
+            // Hard reload to guarantee fresh data is displayed
+            window.location.reload()
         } catch (error) {
             console.error('Generation failed', error)
-        } finally {
             clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
@@ -127,7 +125,7 @@ export function LaunchPlanStageClient({
                 <FullScreenLoader isLoading={isGenerating} message="Estimating costs, identifying channels, and defining metrics..." />
 
                 {/* Stage Header with Summary */}
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white shadow-lg shadow-pink-200/50">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,13 +133,13 @@ export function LaunchPlanStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Launch Plan</h1>
-                            <p className="text-sm text-gray-500">How do I get my first users?</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Launch Plan</h1>
+                            <p className="text-xs sm:text-sm text-gray-500">How do I get my first users?</p>
                         </div>
                     </div>
 
                     {/* Actions & Summary */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                         {!hasData && (
                             <Button
                                 onClick={handleGenerateAll}

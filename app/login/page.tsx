@@ -49,11 +49,11 @@ function LoginContent() {
             <AnimatedBackground />
 
             {/* Header */}
-            <header className="h-16 relative z-10">
+            <header className="h-14 sm:h-16 relative z-10 px-4 sm:px-0">
                 <Container className="h-full flex items-center">
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/idey.webp" alt="ideY Logo" width={48} height={36} className="w-auto h-9" />
-                        <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        <Image src="/idey.webp" alt="ideY Logo" width={48} height={36} className="w-auto h-8 sm:h-9" />
+                        <span className="font-bold text-lg sm:text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                             ideY
                         </span>
                     </Link>
@@ -61,7 +61,7 @@ function LoginContent() {
             </header>
 
             {/* Content */}
-            <main className="flex-1 flex items-center justify-center py-12 relative z-10">
+            <main className="flex-1 flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 relative z-10">
                 <Container maxWidth="lg">
                     <Card padding="lg" className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl shadow-indigo-100/50">
                         <div className="text-center mb-8">

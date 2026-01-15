@@ -31,20 +31,21 @@ export default async function ProfilePage() {
             <AnimatedBackground />
 
             {/* Floating Pill Header */}
-            <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl">
-                <div className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg shadow-gray-200/50 border border-white/50 px-6 py-3 flex items-center justify-between">
+            <header className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-5xl">
+                <div className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg shadow-gray-200/50 border border-white/50 px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
                         <Image src="/idey.webp" alt="ideY Logo" width={32} height={24} className="w-auto h-6" />
                         <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                             ideY
                         </span>
                     </Link>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <Link
                             href="/onboarding"
-                            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium rounded-full hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md shadow-indigo-200/50"
+                            className="px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium rounded-full hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md shadow-indigo-200/50"
                         >
-                            + New Project
+                            <span className="sm:hidden">+ New</span>
+                            <span className="hidden sm:inline">+ New Project</span>
                         </Link>
                         <form action="/api/auth/signout" method="POST">
                             <button type="submit" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
@@ -56,7 +57,7 @@ export default async function ProfilePage() {
             </header>
 
             {/* Main content */}
-            <main className="relative z-10 max-w-2xl mx-auto px-6 pt-32 pb-20 space-y-16">
+            <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20 space-y-12 sm:space-y-16">
                 {/* Profile Section */}
                 <section>
                     <EditProfile

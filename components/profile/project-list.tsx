@@ -144,25 +144,25 @@ export function EditProfile({ displayName, email, isPremium, memberSince }: Edit
 
     return (
         <>
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gray-900 flex items-center justify-center text-white text-2xl font-medium shadow-xl shadow-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gray-900 flex items-center justify-center text-white text-xl sm:text-2xl font-medium shadow-xl shadow-gray-200">
                         {initials}
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{displayName}</h2>
-                        <p className="text-gray-500 font-medium">{email}</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{displayName}</h2>
+                        <p className="text-sm sm:text-base text-gray-500 font-medium truncate max-w-[200px] sm:max-w-none">{email}</p>
                     </div>
                 </div>
                 <button
                     onClick={() => setIsEditing(true)}
-                    className="text-sm font-medium text-gray-400 hover:text-indigo-600 transition-colors px-3 py-1 hover:bg-indigo-50 rounded-lg"
+                    className="text-sm font-medium text-gray-400 hover:text-indigo-600 transition-colors px-3 py-1 hover:bg-indigo-50 rounded-lg self-start"
                 >
                     Edit Profile
                 </button>
             </div>
 
-            <div className="mt-8 flex items-center justify-between py-6 border-y border-gray-100">
+            <div className="mt-6 sm:mt-8 flex items-center justify-between py-4 sm:py-6 border-y border-gray-100">
                 <div>
                     <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Current Plan</span>
                     <span className={`text-lg font-bold ${isPremium ? 'text-indigo-600' : 'text-gray-900'}`}>

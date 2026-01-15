@@ -108,7 +108,7 @@ export function Footer() {
                     {/* Top gradient bar */}
                     <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-                    <div className="px-8 md:px-12 py-12">
+                    <div className="px-6 sm:px-8 md:px-12 py-10 sm:py-12">
                         {/* Main grid */}
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
                             {/* Brand column */}

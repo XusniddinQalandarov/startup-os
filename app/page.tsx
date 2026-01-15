@@ -90,7 +90,7 @@ export default async function LandingPage() {
               <span className="text-sm font-medium text-gray-700">Build what's worth building</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="text-gray-900">Turn your </span>
               <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                 startup idea
@@ -99,7 +99,7 @@ export default async function LandingPage() {
               <span className="text-gray-900">into reality</span>
             </h1>
 
-            <p className="text-xl text-gray-600 mb-10 max-w-xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-600 mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed">
               Get honest feedback, customer questions, MVP scope, roadmap, and actionable tasks.
               <span className="font-medium text-gray-900"> No hype, just execution.</span>
             </p>
@@ -141,7 +141,7 @@ export default async function LandingPage() {
             </div>
 
             {/* Social proof - light theme */}
-            <div className="mt-16 flex items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-orange-300 border-2 border-white" />
