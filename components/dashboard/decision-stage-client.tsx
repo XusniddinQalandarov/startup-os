@@ -113,6 +113,8 @@ export function DecisionStageClient({
         try {
             await generateDecision(project.id, project.idea, project.targetUsers, project.businessType)
             router.refresh()
+            // Small delay to ensure UI renders before hiding loader
+            await new Promise(resolve => setTimeout(resolve, 500))
         } catch (error) {
             console.error('Generation failed', error)
         } finally {

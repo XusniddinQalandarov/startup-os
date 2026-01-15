@@ -7,18 +7,41 @@ import { headers } from 'next/headers'
 export async function signUp(formData: FormData) {
   const supabase = await createClient()
   
+  const firstName = formData.get('firstName') as string
+  const lastName = formData.get('lastName') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signUp({
+  // Get origin for email confirmation redirect
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const origin = `${protocol}://${host}`
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${origin}/api/auth/callback?next=/profile`,
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+        full_name: `${firstName} ${lastName}`,
+      },
+    },
   })
 
   if (error) {
     return { error: error.message }
   }
 
+  // Check if email confirmation is required
+  if (data.user && !data.session) {
+    // Email confirmation is required
+    return { success: true, message: 'Check your email for a confirmation link!' }
+  }
+
+  // If no email confirmation required, redirect directly
   redirect('/profile')
 }
 

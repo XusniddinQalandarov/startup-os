@@ -8,8 +8,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Startup OS - AI Co-Founder",
-  description: "Turn your startup idea into an actionable execution plan",
+  title: "ideY - Build What's Worth Building",
+  description: "Turn your startup idea into an actionable execution plan with AI",
+  icons: {
+    icon: "/idey.webp",
+  },
 };
 
 export default function RootLayout({

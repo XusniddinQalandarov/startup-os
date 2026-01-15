@@ -10,17 +10,22 @@ import { signUp, signInWithGoogle } from '@/app/actions/auth'
 
 export default function SignUpPage() {
     const [error, setError] = useState<string | null>(null)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
     async function handleSubmit(formData: FormData) {
         setIsLoading(true)
         setError(null)
+        setSuccessMessage(null)
 
         const result = await signUp(formData)
 
         if (result?.error) {
             setError(result.error)
+            setIsLoading(false)
+        } else if (result?.success && result?.message) {
+            setSuccessMessage(result.message)
             setIsLoading(false)
         }
     }
@@ -89,6 +94,24 @@ export default function SignUpPage() {
                         </div>
 
                         <form action={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Input
+                                    name="firstName"
+                                    type="text"
+                                    label="First Name"
+                                    placeholder="John"
+                                    required
+                                    className="bg-white/50"
+                                />
+                                <Input
+                                    name="lastName"
+                                    type="text"
+                                    label="Last Name"
+                                    placeholder="Doe"
+                                    required
+                                    className="bg-white/50"
+                                />
+                            </div>
                             <Input
                                 name="email"
                                 type="email"
@@ -112,12 +135,20 @@ export default function SignUpPage() {
                                 </div>
                             )}
 
+                            {successMessage && (
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                                    <p className="text-sm font-medium text-green-700">{successMessage}</p>
+                                    <p className="text-xs text-green-600 mt-1">Please check your inbox and spam folder.</p>
+                                </div>
+                            )}
+
                             <Button
                                 type="submit"
                                 className="w-full bg-linear-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-200/50 border-0"
                                 isLoading={isLoading}
+                                disabled={!!successMessage}
                             >
-                                Create account
+                                {successMessage ? 'Check your email!' : 'Create account'}
                             </Button>
                         </form>
 

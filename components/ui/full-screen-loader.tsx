@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface FullScreenLoaderProps {
     isLoading: boolean
@@ -9,6 +10,12 @@ interface FullScreenLoaderProps {
 
 export function FullScreenLoader({ isLoading, message = 'Generating analysis...' }: FullScreenLoaderProps) {
     const [progress, setProgress] = useState(0)
+    const [mounted, setMounted] = useState(false)
+
+    // Ensure we only render portal on client
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Simulate progress - starts fast, then slows down as it gets closer to 100%
     useEffect(() => {
@@ -42,10 +49,10 @@ export function FullScreenLoader({ isLoading, message = 'Generating analysis...'
         }
     }, [isLoading])
 
-    if (!isLoading) return null
+    if (!isLoading || !mounted) return null
 
-    return (
-        <div className="fixed inset-0 z-[9999] h-screen w-screen overflow-hidden bg-black">
+    const loaderContent = (
+        <div className="fixed inset-0 z-[99999] h-screen w-screen overflow-hidden bg-black">
             {/* Fullscreen video background */}
             <video
                 autoPlay
@@ -61,7 +68,7 @@ export function FullScreenLoader({ isLoading, message = 'Generating analysis...'
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
             {/* Bottom center content - text and progress bar */}
-            <div className="absolute bottom-0 left-0 right-0 z-[10000] pb-12 px-6">
+            <div className="absolute bottom-0 left-0 right-0 z-[100000] pb-12 px-6">
                 <div className="max-w-md mx-auto text-center">
                     {/* Message */}
                     <h3 className="text-xl md:text-2xl font-semibold text-white mb-4 drop-shadow-lg">{message}</h3>
@@ -83,4 +90,7 @@ export function FullScreenLoader({ isLoading, message = 'Generating analysis...'
             </div>
         </div>
     )
+
+    // Use portal to render at document body level, escaping stacking context
+    return createPortal(loaderContent, document.body)
 }

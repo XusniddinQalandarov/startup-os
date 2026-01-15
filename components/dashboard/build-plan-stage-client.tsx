@@ -98,6 +98,8 @@ export function BuildPlanStageClient({
         try {
             await generateBuildPlan(project.id, project.idea, project.founderType)
             router.refresh()
+            // Small delay to ensure UI renders before hiding loader
+            await new Promise(resolve => setTimeout(resolve, 500))
         } catch (error) {
             console.error('Generation failed', error)
         } finally {
