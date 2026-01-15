@@ -13,6 +13,7 @@ import { createProject } from '@/app/actions/projects'
 import type { OnboardingData, BusinessType, FounderType } from '@/types'
 
 const TOTAL_STEPS = 5
+export const ONBOARDING_STORAGE_KEY = 'pending_onboarding_data'
 
 interface StepProps {
     value: OnboardingData
@@ -243,6 +244,14 @@ export default function OnboardingPage() {
         const result = await createProject(data)
 
         if ('error' in result) {
+            // If not authenticated, save data and redirect to login
+            if (result.error === 'Not authenticated') {
+                // Save onboarding data to localStorage
+                localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(data))
+                // Redirect to login with return URL to complete onboarding
+                router.push('/login?next=/onboarding/complete')
+                return
+            }
             setError(result.error)
             setIsLoading(false)
             return
@@ -272,16 +281,22 @@ export default function OnboardingPage() {
     return (
         <div className="min-h-screen flex flex-col relative">
             <AnimatedBackground />
-            {/* Header */}
-            <header className="h-16 relative z-10">
-                <Container className="h-full flex items-center">
+            {/* Floating Pill Header */}
+            <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-3xl">
+                <div className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg shadow-gray-200/50 border border-white/50 px-6 py-3 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/ideY.webp" alt="ideY Logo" width={48} height={36} className="w-auto h-9" />
-                        <span className="font-bold text-xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        <Image src="/ideY.webp" alt="ideY Logo" width={32} height={24} className="w-auto h-6" />
+                        <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                             ideY
                         </span>
                     </Link>
-                </Container>
+                    <Link
+                        href="/profile"
+                        className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                        My Projects
+                    </Link>
+                </div>
             </header>
 
             {/* Content */}

@@ -1,13 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/layout'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-gsap.registerPlugin(ScrollTrigger)
 
 const footerLinks = {
     product: {
@@ -28,15 +25,7 @@ const footerLinks = {
             { name: 'Contact', href: '/contact' }
         ]
     },
-    resources: {
-        title: 'Resources',
-        links: [
-            { name: 'Documentation', href: '/docs' },
-            { name: 'Help Center', href: '/help' },
-            { name: 'Community', href: '/community' },
-            { name: 'API', href: '/api' }
-        ]
-    },
+
     legal: {
         title: 'Legal',
         links: [
@@ -88,43 +77,31 @@ const socialLinks = [
 
 export function Footer() {
     const footerRef = useRef<HTMLElement>(null)
+    const [isVisible, setIsVisible] = useState(false)
 
     useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.from(footerRef.current, {
-                scrollTrigger: {
-                    trigger: footerRef.current,
-                    start: 'top 95%',
-                    toggleActions: 'play none none reverse'
-                },
-                y: 40,
-                opacity: 0,
-                duration: 1,
-                ease: 'power3.out'
-            })
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true)
+                }
+            },
+            { threshold: 0.1 }
+        )
 
-            gsap.from('.footer-col', {
-                scrollTrigger: {
-                    trigger: footerRef.current,
-                    start: 'top 90%',
-                    toggleActions: 'play none none reverse'
-                },
-                y: 30,
-                opacity: 0,
-                duration: 0.8,
-                stagger: 0.1,
-                ease: 'power3.out'
-            })
-        }, footerRef)
+        if (footerRef.current) {
+            observer.observe(footerRef.current)
+        }
 
-        // Refresh ScrollTrigger after component mount
-        ScrollTrigger.refresh()
-
-        return () => ctx.revert()
+        return () => observer.disconnect()
     }, [])
 
     return (
-        <footer ref={footerRef} className="relative mt-24">
+        <footer
+            ref={footerRef}
+            className={`relative mt-24 transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+        >
             {/* Floating container */}
             <Container maxWidth="xl">
                 <div className="bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
@@ -133,7 +110,7 @@ export function Footer() {
 
                     <div className="px-8 md:px-12 py-12">
                         {/* Main grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-12">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
                             {/* Brand column */}
                             <div className="col-span-2 lg:col-span-2 footer-col">
                                 <Link href="/" className="inline-flex items-center gap-2 mb-4">
@@ -168,16 +145,36 @@ export function Footer() {
                                 <div key={column.title} className="footer-col">
                                     <h4 className="text-white font-semibold mb-4">{column.title}</h4>
                                     <ul className="space-y-3">
-                                        {column.links.map(link => (
-                                            <li key={link.name}>
-                                                <Link
-                                                    href={link.href}
-                                                    className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
-                                                >
-                                                    {link.name}
-                                                </Link>
-                                            </li>
-                                        ))}
+                                        {column.links.map(link => {
+                                            // Check if it's an anchor link (e.g., /#features)
+                                            const isAnchorLink = link.href.startsWith('/#')
+
+                                            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                                                if (isAnchorLink) {
+                                                    e.preventDefault()
+                                                    const id = link.href.replace('/#', '')
+                                                    const element = document.getElementById(id)
+                                                    if (element) {
+                                                        element.scrollIntoView({
+                                                            behavior: 'smooth',
+                                                            block: 'start'
+                                                        })
+                                                    }
+                                                }
+                                            }
+
+                                            return (
+                                                <li key={link.name}>
+                                                    <Link
+                                                        href={link.href}
+                                                        onClick={handleClick}
+                                                        className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
+                                                    >
+                                                        {link.name}
+                                                    </Link>
+                                                </li>
+                                            )
+                                        })}
                                     </ul>
                                 </div>
                             ))}
@@ -188,9 +185,9 @@ export function Footer() {
                             <p className="text-gray-500 text-sm">
                                 © {new Date().getFullYear()} ideY. All rights reserved.
                             </p>
-                            <p className="text-gray-500 text-sm">
-                                Built for founders who ship. 🚀
-                            </p>
+                            <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                <span>Built for founders who ship!</span>
+                            </div>
                         </div>
                     </div>
                 </div>

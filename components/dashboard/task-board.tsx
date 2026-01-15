@@ -84,7 +84,7 @@ function DroppableColumn({ column, tasks, onTaskEdit, onAddTask, isActive }: Dro
     const taskIds = tasks.map(t => t.id)
 
     return (
-        <div className="flex flex-col w-[300px] flex-shrink-0">
+        <div className="flex flex-col flex-1 min-w-[280px] lg:min-w-0">
             <div className="flex items-center justify-between mb-3 px-1">
                 <h2 className="font-semibold text-gray-900">{column.title}</h2>
                 <div className="flex items-center gap-2">
@@ -105,11 +105,11 @@ function DroppableColumn({ column, tasks, onTaskEdit, onAddTask, isActive }: Dro
                 </div>
             </div>
 
-            {/* Droppable Area - Full height and very sensitive */}
+            {/* Droppable Area - Scrollable with max height, invisible scrollbar */}
             <div
                 ref={setNodeRef}
                 className={cn(
-                    'flex-1 rounded-xl p-3 min-h-[450px] transition-all duration-150 border-2',
+                    'flex-1 rounded-xl p-3 max-h-[calc(100vh-340px)] min-h-140 overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-150 border-2',
                     isOver || isActive
                         ? `${column.activeColor} border-dashed border-current shadow-inner`
                         : `${column.color} border-transparent`
@@ -217,7 +217,7 @@ export function TaskBoard({ tasks, onTaskMove, onTaskEdit, onAddTask }: TaskBoar
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
+            <div className="flex gap-4 overflow-x-auto lg:grid lg:grid-cols-4 lg:overflow-x-visible pb-4">
                 {columns.map(column => (
                     <DroppableColumn
                         key={column.id}

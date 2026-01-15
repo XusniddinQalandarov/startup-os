@@ -27,6 +27,7 @@ export async function signIn(formData: FormData) {
   
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const next = formData.get('next') as string || '/profile'
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -37,10 +38,10 @@ export async function signIn(formData: FormData) {
     return { error: error.message }
   }
 
-  redirect('/profile')
+  redirect(next)
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(next: string = '/profile') {
   const supabase = await createClient()
   const headersList = await headers()
   const origin = headersList.get('origin') || 'http://localhost:3000'
@@ -48,7 +49,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/api/auth/callback`,
+      redirectTo: `${origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
     },
   })
 

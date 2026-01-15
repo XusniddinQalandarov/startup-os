@@ -22,7 +22,7 @@ import {
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { Card, Button, Modal, Input } from '@/components/ui'
-import { generateMvpScope } from '@/app/actions/ai'
+import { generateMvpScope, updateMvpFeatures } from '@/app/actions/ai'
 import { MvpFeature, Startup } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -110,7 +110,7 @@ function DroppableColumn({ column, features, isActive }: DroppableColumnProps) {
             <div
                 ref={setNodeRef}
                 className={cn(
-                    "flex-1 p-3 rounded-b-xl min-h-[300px] transition-all duration-150",
+                    "flex-1 p-3 rounded-b-xl max-h-[calc(100vh-280px)] min-h-140 overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-150",
                     column.color,
                     (isOver || isActive) && column.activeColor
                 )}
@@ -227,21 +227,29 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
         const draggedFeature = features.find(f => f.id === active.id)
         if (!draggedFeature) return
 
+        let newPriority: FeaturePriority | null = null
+
         // Check if dropped over a column directly
         const overColumn = columns.find(c => c.id === over.id)
         if (overColumn && draggedFeature.priority !== overColumn.id) {
-            setFeatures(prev => prev?.map(f =>
-                f.id === draggedFeature.id ? { ...f, priority: overColumn.id } : f
-            ) || null)
-            return
+            newPriority = overColumn.id
         }
 
         // Check if dropped over another feature
         const overFeature = features.find(f => f.id === over.id)
         if (overFeature && draggedFeature.priority !== overFeature.priority) {
-            setFeatures(prev => prev?.map(f =>
-                f.id === draggedFeature.id ? { ...f, priority: overFeature.priority } : f
-            ) || null)
+            newPriority = overFeature.priority
+        }
+
+        // Update local state and persist to database
+        if (newPriority) {
+            const updatedFeatures = features.map(f =>
+                f.id === draggedFeature.id ? { ...f, priority: newPriority } : f
+            )
+            setFeatures(updatedFeatures)
+            
+            // Persist to database
+            updateMvpFeatures(project.id, updatedFeatures)
         }
     }
 
@@ -277,7 +285,7 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
     }
 
     return (
-        <div className="space-y-6 h-[calc(100vh-200px)] flex flex-col">
+        <div className="space-y-6 flex flex-col">
             <div className="flex items-center justify-between flex-shrink-0">
                 <div>
                     <h1 className="text-2xl font-semibold text-gray-900">MVP Scope</h1>
@@ -303,7 +311,7 @@ export function MvpView({ project, initialFeatures }: MvpViewProps) {
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {columns.map(column => (
                         <DroppableColumn
                             key={column.id}

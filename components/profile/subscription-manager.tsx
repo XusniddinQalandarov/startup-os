@@ -85,10 +85,10 @@ export function SubscriptionManager({ isPremium }: SubscriptionManagerProps) {
             </div>
 
             {isPremium && (
-                <div className="mt-4 pt-4 border-t border-gray-200/50 flex items-center justify-between text-xs text-gray-400">
+                <div className="mt-4 pt-4 border-t border-gray-200/50 flex items-center justify-between text-xs text-gray-600">
                     <span>Manage your billing and payment method</span>
                     {/* Placeholder for future implementation */}
-                    <span className="text-gray-300">Stripe Integration Coming Soon</span>
+                    <span className="text-gray-500">Stripe Integration Coming Soon</span>
                 </div>
             )}
 

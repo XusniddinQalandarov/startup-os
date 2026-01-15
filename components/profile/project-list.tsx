@@ -54,7 +54,7 @@ export function ProjectList({ projects, isPremium = false }: ProjectListProps) {
                 {projects.map((project) => (
                     <div key={project.id} className="group relative">
                         <Link href={`/dashboard/${project.id}`} className="block">
-                            <div className="flex items-center justify-between p-6 rounded-2xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300">
+                            <div className="flex items-center justify-between p-6 rounded-2xl border border-gray-100 bg-gray-50/50 hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300">
                                 <div className="flex-1 min-w-0 pr-12">
                                     <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors mb-2">
                                         {project.name}

@@ -281,6 +281,29 @@ Generate at least 9 features with the distribution shown above.`
   }
 }
 
+export async function updateMvpFeatures(startupId: string, features: MvpFeature[]): Promise<boolean> {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase.from('ai_outputs').upsert({
+      startup_id: startupId,
+      output_type: 'mvp',
+      output_data: features,
+    }, { onConflict: 'startup_id,output_type' })
+
+    if (error) {
+      console.error('[MVP] Error updating features:', error)
+      return false
+    }
+
+    revalidatePath(`/dashboard/${startupId}/build`)
+    return true
+  } catch (error) {
+    console.error('[MVP] Error updating features:', error)
+    return false
+  }
+}
+
 // ========== Roadmap ==========
 
 type TimelineType = 'hackathon' | 'sprint' | 'standard' | 'custom'

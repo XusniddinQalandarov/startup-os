@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button, Input, Card } from '@/components/ui'
@@ -9,14 +10,20 @@ import { AnimatedBackground } from '@/components/ui/animated-background'
 import { signIn, signInWithGoogle } from '@/app/actions/auth'
 
 export default function LoginPage() {
+    const searchParams = useSearchParams()
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+    // Get the redirect URL from query params
+    const nextUrl = searchParams.get('next') || '/profile'
 
     async function handleSubmit(formData: FormData) {
         setIsLoading(true)
         setError(null)
 
+        // Add next URL to form data
+        formData.set('next', nextUrl)
         const result = await signIn(formData)
 
         if (result?.error) {
@@ -29,7 +36,7 @@ export default function LoginPage() {
         setIsGoogleLoading(true)
         setError(null)
 
-        const result = await signInWithGoogle()
+        const result = await signInWithGoogle(nextUrl)
 
         if (result?.error) {
             setError(result.error)

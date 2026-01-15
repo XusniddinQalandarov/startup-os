@@ -76,6 +76,7 @@ export function Features() {
 
     useEffect(() => {
         const ctx = gsap.context(() => {
+            // Title animation
             gsap.from('.features-title', {
                 scrollTrigger: {
                     trigger: sectionRef.current,
@@ -88,17 +89,18 @@ export function Features() {
                 ease: 'power3.out'
             })
 
+            // Cards stagger animation
             cardsRef.current.forEach((card, index) => {
                 gsap.from(card, {
                     scrollTrigger: {
                         trigger: card,
-                        start: 'top 90%',
+                        start: 'top 85%',
                         toggleActions: 'play none none reverse'
                     },
-                    y: 40,
+                    y: 60,
                     opacity: 0,
                     scale: 0.95,
-                    duration: 0.6,
+                    duration: 0.8,
                     delay: index * 0.08,
                     ease: 'power3.out'
                 })
@@ -110,7 +112,7 @@ export function Features() {
     }, [])
 
     return (
-        <section ref={sectionRef} className="py-24 relative overflow-hidden">
+        <section id="features" ref={sectionRef} className="py-24 relative overflow-hidden">
             <Container>
                 <div className="text-center mb-16 features-title">
                     <span className="inline-block px-4 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-full mb-4">
@@ -132,7 +134,7 @@ export function Features() {
                             ref={el => { if (el) cardsRef.current[index] = el }}
                             className={`${feature.gridClass} group`}
                         >
-                            <div className="relative h-full bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:shadow-indigo-100/50 hover:border-indigo-100 transition-all duration-500 hover:-translate-y-1 overflow-hidden">
+                            <div className="relative h-full bg-gray-50/50 rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:shadow-indigo-100/50 hover:border-indigo-100 transition-all duration-500 hover:-translate-y-1 overflow-hidden">
                                 {/* Big background icon - bottom right */}
                                 <div className="absolute -bottom-6 -right-6 w-36 h-36 text-indigo-100 group-hover:text-indigo-200 opacity-50 group-hover:opacity-70 group-hover:scale-110 transition-all duration-500">
                                     {feature.icon}

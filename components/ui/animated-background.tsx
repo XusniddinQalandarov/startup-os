@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
-
+// Startup-themed icons for the background - using pure CSS animations for better performance
 const icons = [
     // Lightbulb - Ideas
     <svg key="lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -40,119 +38,95 @@ const icons = [
     </svg>,
 ]
 
-interface AnimatedItem {
-    id: number
-    icon: React.ReactNode
-    size: number
-}
+// Pre-computed positions for icons (4x4 grid with randomization)
+const iconPositions = [
+    { x: 8, y: 10, size: 32, delay: 0 },
+    { x: 32, y: 8, size: 28, delay: 1.2 },
+    { x: 58, y: 12, size: 36, delay: 0.4 },
+    { x: 85, y: 6, size: 30, delay: 1.8 },
+    { x: 12, y: 32, size: 34, delay: 0.8 },
+    { x: 38, y: 28, size: 26, delay: 2.2 },
+    { x: 62, y: 35, size: 32, delay: 0.2 },
+    { x: 88, y: 30, size: 28, delay: 1.4 },
+    { x: 6, y: 55, size: 30, delay: 1.6 },
+    { x: 35, y: 58, size: 36, delay: 0.6 },
+    { x: 60, y: 52, size: 28, delay: 2.0 },
+    { x: 82, y: 56, size: 34, delay: 1.0 },
+    { x: 15, y: 78, size: 32, delay: 2.4 },
+    { x: 40, y: 82, size: 30, delay: 0.3 },
+    { x: 65, y: 76, size: 26, delay: 1.5 },
+    { x: 90, y: 80, size: 32, delay: 0.9 },
+]
 
 export function AnimatedBackground() {
-    const containerRef = useRef<HTMLDivElement>(null)
-    const iconsRef = useRef<(HTMLDivElement | null)[]>([])
-    const [items, setItems] = useState<AnimatedItem[]>([])
-
-    useEffect(() => {
-        // Generate items on client side only to avoid hydration mismatch
-        const generatedItems = [...icons, ...icons].map((icon, i) => ({
-            id: i,
-            icon,
-            size: 24 + Math.random() * 24 // Random size between 24 and 48
-        }))
-        setItems(generatedItems)
-    }, [])
-
-    useEffect(() => {
-        if (!containerRef.current || items.length === 0) return
-
-        const container = containerRef.current
-        const iconElements = iconsRef.current.filter(Boolean) as HTMLDivElement[]
-
-        // Grid configuration for 16 items (4x4)
-        const cols = 4
-        const rows = 4
-        const cellWidth = 100 / cols
-        const cellHeight = 100 / rows
-
-        iconElements.forEach((el, index) => {
-            // Determine grid cell
-            const col = index % cols
-            const row = Math.floor(index / cols)
-
-            // Random position within the cell (leaving some padding so they don't touch edges of cell)
-            const x = (col * cellWidth) + 10 + Math.random() * (cellWidth - 20)
-            const y = (row * cellHeight) + 10 + Math.random() * (cellHeight - 20)
-
-            // Initial set
-            gsap.set(el, {
-                left: `${x}%`,
-                top: `${y}%`,
-                xPercent: -50,
-                yPercent: -50,
-                opacity: 0,
-                scale: 0.5,
-                rotation: Math.random() * 30 - 15,
-            })
-
-            // Fade in and float
-            const tl = gsap.timeline({
-                repeat: -1,
-                yoyo: true,
-                defaults: { ease: "sine.inOut" }
-            })
-
-            // Initial appearance
-            gsap.to(el, {
-                opacity: 0.15 + Math.random() * 0.15, // Random opacity between 0.15 and 0.3
-                scale: 1,
-                duration: 1.5,
-                delay: index * 0.1, // Stagger appearances slightly
-                ease: "power2.out"
-            })
-
-            // Continuous floating motion
-            const floatDuration = 4 + Math.random() * 4
-
-            tl.to(el, {
-                y: `+=${20 + Math.random() * 30}`, // Float down 20-50px
-                x: `+=${-10 + Math.random() * 20}`, // Float sideways slightly
-                rotation: `+=${-10 + Math.random() * 20}`,
-                duration: floatDuration,
-            })
-        })
-
-        return () => {
-            // Cleanup GSAP animations
-            gsap.killTweensOf(iconElements)
-        }
-    }, [items])
-
     return (
         <div
-            ref={containerRef}
             className="fixed inset-0 overflow-hidden pointer-events-none z-0"
             aria-hidden="true"
         >
-            {/* Background Gradients */}
+            {/* Light background with subtle gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50" />
 
-            {/* Large animated orbs using CSS for base heavy-lifting, less JS overhead */}
-            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-gradient-to-r from-blue-200/20 to-indigo-200/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+            {/* Large gradient orbs - using CSS transforms for GPU acceleration */}
+            <div
+                className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-gradient-to-r from-blue-200/20 to-indigo-200/20 rounded-full blur-3xl"
+                style={{ animation: 'pulse 8s ease-in-out infinite' }}
+            />
+            <div
+                className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"
+                style={{ animation: 'pulse 8s ease-in-out infinite 2s' }}
+            />
+            <div
+                className="absolute top-[30%] right-[20%] w-[30%] h-[30%] bg-gradient-to-r from-indigo-100/30 to-violet-100/20 rounded-full blur-3xl"
+                style={{ animation: 'pulse 6s ease-in-out infinite 1s' }}
+            />
 
-            {/* Floating Icons */}
-            {items.map((item, index) => (
+            {/* Floating Icons - using CSS animations instead of GSAP */}
+            {iconPositions.map((pos, index) => (
                 <div
-                    key={item.id}
-                    ref={(el) => { iconsRef.current[index] = el }}
-                    className="absolute text-indigo-900/10"
+                    key={index}
+                    className="absolute text-purple-500/35 floating-icon"
                     style={{
-                        width: item.size,
-                        height: item.size,
+                        left: `${pos.x}%`,
+                        top: `${pos.y}%`,
+                        width: pos.size,
+                        height: pos.size,
+                        animationDelay: `${pos.delay}s`,
+                        animationDuration: `${6 + (index % 3)}s`,
                     }}
                 >
-                    {item.icon}
+                    {icons[index % icons.length]}
                 </div>
             ))}
+
+            {/* CSS Keyframes - injected via style tag for better performance */}
+            <style jsx>{`
+                .floating-icon {
+                    animation: floatIcon ease-in-out infinite;
+                }
+                
+                @keyframes floatIcon {
+                    0%, 100% {
+                        transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
+                        opacity: 0.25;
+                    }
+                    50% {
+                        transform: translate(-50%, -50%) translateY(-30px) rotate(8deg);
+                        opacity: 0.45;
+                    }
+                }
+                
+                @keyframes pulse {
+                    0%, 100% {
+                        opacity: 0.6;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 1;
+                        transform: scale(1.05);
+                    }
+                }
+            `}</style>
         </div>
     )
 }

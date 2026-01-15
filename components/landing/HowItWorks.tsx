@@ -114,7 +114,7 @@ export function HowItWorks() {
                             ref={el => { if (el) stepsRef.current[index] = el }}
                             className="relative group"
                         >
-                            <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg shadow-gray-100/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-500 hover:-translate-y-1 h-full overflow-hidden">
+                            <div className="relative bg-gray-50/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg shadow-gray-100/50 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-500 hover:-translate-y-1 h-full overflow-hidden">
                                 {/* Step number - top right */}
                                 <span className="absolute top-4 right-4 text-5xl font-bold text-gray-100 group-hover:text-indigo-100 transition-colors z-10">
                                     {step.number}
