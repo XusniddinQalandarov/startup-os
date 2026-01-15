@@ -576,11 +576,11 @@ Return JSON object with a "costs" array:
     const response = await callOpenRouterJSON<{ costs: CostEstimate[] }>(ANTI_HYPE_PROMPT, prompt, 'fast')
     const costs = Array.isArray(response) ? response : response.costs || []
 
-    await supabase.from('ai_outputs').insert({
+    await supabase.from('ai_outputs').upsert({
       startup_id: startupId,
       output_type: 'costs',
       output_data: costs,
-    })
+    }, { onConflict: 'startup_id,output_type' })
 
     revalidatePath(`/dashboard/${startupId}/costs`)
     return costs
