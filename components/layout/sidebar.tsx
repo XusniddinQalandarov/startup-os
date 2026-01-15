@@ -146,7 +146,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
                     {/* Logo */}
                     <div className="p-4">
                         <Link href="/" className="flex items-center gap-2 px-1">
-                            <Image src="/ideY.webp" alt="ideY Logo" width={32} height={24} className="w-auto h-6" />
+                            <Image src="/idey.webp" alt="ideY Logo" width={32} height={24} className="w-auto h-6" />
                             <span className="font-bold text-lg bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">ideY</span>
                         </Link>
                     </div>

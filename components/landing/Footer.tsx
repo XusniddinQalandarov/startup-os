@@ -114,7 +114,7 @@ export function Footer() {
                             {/* Brand column */}
                             <div className="col-span-2 lg:col-span-2 footer-col">
                                 <Link href="/" className="inline-flex items-center gap-2 mb-4">
-                                    <Image src="/ideY.webp" alt="ideY Logo" width={40} height={30} className="w-auto h-8" />
+                                    <Image src="/idey.webp" alt="ideY Logo" width={40} height={30} className="w-auto h-8" />
                                     <span className="font-bold text-xl text-white">
                                         ideY
                                     </span>
