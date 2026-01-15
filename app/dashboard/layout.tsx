@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
             <Sidebar projects={projects} isPremium={isPremium} />
 
-            <div className="pl-0 md:pl-60 min-h-screen flex flex-col relative z-[5]">
+            <div className="pl-0 md:pl-60 min-h-screen flex flex-col relative">
                 {children}
             </div>
         </div>
