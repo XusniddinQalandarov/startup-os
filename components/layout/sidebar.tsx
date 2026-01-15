@@ -148,7 +148,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
             {/* Mobile hamburger button */}
             <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden fixed top-4 left-4 z-40 p-3 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100"
+                className="md:hidden fixed top-4 left-4 z-20 p-3 bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100"
                 aria-label="Open menu"
             >
                 <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,7 +158,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
 
             {/* Mobile header bar with project name */}
             {currentProject && (
-                <div className="md:hidden fixed top-4 left-16 right-4 z-30">
+                <div className="md:hidden fixed top-4 left-16 right-4 z-10">
                     <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-gray-100 px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                             <Image src="/idey.webp" alt="ideY" width={24} height={18} className="w-auto h-5 flex-shrink-0" />
@@ -171,7 +171,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
             {/* Mobile overlay backdrop */}
             {isMobileMenuOpen && (
                 <div
-                    className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+                    className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-20"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
@@ -179,7 +179,7 @@ export function Sidebar({ projects, isPremium }: SidebarProps) {
             {/* Sidebar - Desktop: always visible, Mobile: slide-in drawer */}
             <div
                 className={cn(
-                    "fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-50",
+                    "fixed left-4 top-4 h-[calc(100vh-2rem)] w-52 rounded-3xl p-[2px] z-30 md:z-0",
                     "transition-transform duration-300 ease-out",
                     "md:translate-x-0", // Always visible on desktop
                     isMobileMenuOpen ? "translate-x-0" : "-translate-x-[calc(100%+2rem)]" // Slide in/out on mobile

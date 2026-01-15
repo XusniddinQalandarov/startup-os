@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { cache } from 'react'
 
 // Admin email from environment variable (more secure)
@@ -108,8 +108,8 @@ export const getAllProjects = cache(async function getAllProjects() {
     return data || []
 })
 
-// Get unique user IDs from projects
-export const getUniqueUsers = cache(async function getUniqueUsers() {
+// Get all auth users (using service role)
+export const getAuthUsers = cache(async function getAuthUsers() {
     const supabase = await createClient()
     
     // Check admin access
@@ -118,37 +118,32 @@ export const getUniqueUsers = cache(async function getUniqueUsers() {
         return []
     }
 
-    const { data, error } = await supabase
-        .from('startups')
-        .select('user_id, created_at')
-        .order('created_at', { ascending: false })
+    // Use service role client to access auth.users
+    const serviceClient = createServiceClient()
+    const { data, error } = await serviceClient.auth.admin.listUsers()
 
     if (error) {
-        console.error('Error fetching users:', error)
+        console.error('Error fetching auth users:', error)
         return []
     }
 
-    // Get unique users with their first project date
-    const userMap = new Map<string, { userId: string, firstSeen: string, projectCount: number }>()
-    
-    data?.forEach(row => {
-        if (!userMap.has(row.user_id)) {
-            userMap.set(row.user_id, {
-                userId: row.user_id,
-                firstSeen: row.created_at,
-                projectCount: 1
-            })
-        } else {
-            const existing = userMap.get(row.user_id)!
-            existing.projectCount++
-            // Keep earliest date
-            if (new Date(row.created_at) < new Date(existing.firstSeen)) {
-                existing.firstSeen = row.created_at
-            }
-        }
+    // Get project counts per user
+    const { data: projectData } = await serviceClient
+        .from('startups')
+        .select('user_id')
+
+    const projectCounts: Record<string, number> = {}
+    projectData?.forEach(row => {
+        projectCounts[row.user_id] = (projectCounts[row.user_id] || 0) + 1
     })
 
-    return Array.from(userMap.values())
+    return data.users.map(u => ({
+        id: u.id,
+        email: u.email || 'No email',
+        createdAt: u.created_at,
+        lastSignIn: u.last_sign_in_at,
+        projectCount: projectCounts[u.id] || 0
+    }))
 })
 
 // Get AI output counts by type for a project
@@ -193,7 +188,7 @@ export const getPremiumStats = cache(async function getPremiumStats() {
     const premiumCount = data?.length || 0
     
     // Get total unique users
-    const users = await getUniqueUsers()
+    const users = await getAuthUsers()
     const totalUsers = users.length
     
     return {

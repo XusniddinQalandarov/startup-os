@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { isAdmin, getAdminStats, getAllProjects, getUniqueUsers, getPremiumStats } from '@/app/actions/admin'
+import { isAdmin, getAdminStats, getAllProjects, getAuthUsers, getPremiumStats } from '@/app/actions/admin'
 import { AnimatedBackground } from '@/components/ui/animated-background'
 
 export default async function AdminPage() {
@@ -13,7 +13,7 @@ export default async function AdminPage() {
     const [stats, projects, users, premiumStats] = await Promise.all([
         getAdminStats(),
         getAllProjects(),
-        getUniqueUsers(),
+        getAuthUsers(),
         getPremiumStats()
     ])
 
@@ -114,28 +114,41 @@ export default async function AdminPage() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100">
-                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">User ID</th>
-                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">First Seen</th>
+                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">Email</th>
+                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">Signed Up</th>
+                                    <th className="text-left py-3 px-2 text-gray-500 font-medium">Last Login</th>
                                     <th className="text-left py-3 px-2 text-gray-500 font-medium">Projects</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {users.slice(0, 50).map(user => (
-                                    <tr key={user.userId} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                        <td className="py-3 px-2 font-mono text-xs text-gray-600">
-                                            {user.userId.slice(0, 8)}...
+                                    <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                        <td className="py-3 px-2 text-gray-900 font-medium">
+                                            {user.email}
                                         </td>
                                         <td className="py-3 px-2 text-gray-600">
-                                            {new Date(user.firstSeen).toLocaleDateString('en-US', {
+                                            {new Date(user.createdAt).toLocaleDateString('en-US', {
                                                 month: 'short',
                                                 day: 'numeric',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
+                                                year: 'numeric'
                                             })}
                                         </td>
+                                        <td className="py-3 px-2 text-gray-500 text-xs">
+                                            {user.lastSignIn
+                                                ? new Date(user.lastSignIn).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })
+                                                : 'Never'
+                                            }
+                                        </td>
                                         <td className="py-3 px-2">
-                                            <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.projectCount > 0
+                                                    ? 'bg-indigo-50 text-indigo-600'
+                                                    : 'bg-gray-50 text-gray-400'
+                                                }`}>
                                                 {user.projectCount}
                                             </span>
                                         </td>
@@ -179,12 +192,12 @@ export default async function AdminPage() {
                                         </td>
                                         <td className="py-3 px-2">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${project.status === 'evaluating'
-                                                    ? 'bg-amber-50 text-amber-600'
-                                                    : project.status === 'building'
-                                                        ? 'bg-blue-50 text-blue-600'
-                                                        : project.status === 'launched'
-                                                            ? 'bg-green-50 text-green-600'
-                                                            : 'bg-gray-50 text-gray-600'
+                                                ? 'bg-amber-50 text-amber-600'
+                                                : project.status === 'building'
+                                                    ? 'bg-blue-50 text-blue-600'
+                                                    : project.status === 'launched'
+                                                        ? 'bg-green-50 text-green-600'
+                                                        : 'bg-gray-50 text-gray-600'
                                                 }`}>
                                                 {project.status}
                                             </span>
