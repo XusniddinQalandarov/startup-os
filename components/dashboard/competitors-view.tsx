@@ -263,7 +263,7 @@ export function CompetitorsView({ project, initialAnalysis }: CompetitorsViewPro
 
             {/* Comparison Modal */}
             {comparisonOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md transition-all duration-300">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md transition-all duration-300">
                     <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-white/20 animate-in fade-in zoom-in-95 duration-200">
                         {/* Modal Header */}
                         <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white relative z-20">
