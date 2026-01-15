@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button, Modal, Input } from '@/components/ui'
 import { deleteProject } from '@/app/actions/projects'
+import { ChangePassword } from './change-password'
 import type { Startup } from '@/types'
 
 interface ProjectListProps {
@@ -172,6 +173,12 @@ export function EditProfile({ displayName, email, isPremium, memberSince }: Edit
                     <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Member Since</span>
                     <span className="text-lg font-medium text-gray-900">{memberSince.split(' ')[0]} {memberSince.split(' ')[2]}</span>
                 </div>
+            </div>
+
+            {/* Security Section */}
+            <div className="mt-6">
+                <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Security</span>
+                <ChangePassword />
             </div>
 
             {/* Edit Modal */}

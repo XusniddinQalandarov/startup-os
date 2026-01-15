@@ -100,3 +100,50 @@ export async function getUser() {
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
+
+export async function changePassword(formData: FormData) {
+  const supabase = await createClient()
+  
+  const newPassword = formData.get('newPassword') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (newPassword !== confirmPassword) {
+    return { error: 'Passwords do not match' }
+  }
+
+  if (newPassword.length < 6) {
+    return { error: 'Password must be at least 6 characters' }
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true, message: 'Password updated successfully!' }
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const supabase = await createClient()
+  
+  const email = formData.get('email') as string
+
+  // Get origin for password reset redirect
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const origin = `${protocol}://${host}`
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/api/auth/callback?next=/profile`,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true, message: 'Check your email for a password reset link!' }
+}
