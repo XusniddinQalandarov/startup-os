@@ -127,41 +127,34 @@ export function IdeaCheckStageClient({
         const safetyTimeout = setTimeout(() => {
             setIsGenerating(false)
             router.refresh()
-        }, 45000)
+        }, 60000) // Increased to 60s to allow all actions to complete
 
         try {
-            // Trigger all 3 actions in parallel, but handle them independently
-            // This allows the UI to update as pieces finish (Streaming-like UX)
+            // Wait for ALL actions to complete before hiding loader
+            console.log('[Client] Starting all AI generation actions...')
 
-            // 1. Evaluation (Fastest)
-            // We await this one to ensure at least some data is ready before hiding loader
-            generateEvaluationAction(project.id, project.idea, project.targetUsers, project.businessType)
-                .then(() => {
-                    console.log('[Client] Evaluation done')
-                    router.refresh()
-                    // Hide loader as soon as the first/most critical part is done
-                    setIsGenerating(false)
-                    clearTimeout(safetyTimeout)
-                })
+            await Promise.all([
+                generateEvaluationAction(project.id, project.idea, project.targetUsers, project.businessType)
+                    .then(() => console.log('[Client] Evaluation done')),
+                generateQuestionsAction(project.id, project.idea, project.businessType)
+                    .then(() => console.log('[Client] Questions done')),
+                generateAnalysisAction(project.id, project.idea, project.targetUsers, project.businessType)
+                    .then(() => console.log('[Client] Analysis done'))
+            ])
 
-            // 2. Questions (Medium)
-            generateQuestionsAction(project.id, project.idea, project.businessType)
-                .then(() => {
-                    console.log('[Client] Questions done')
-                    router.refresh()
-                })
+            clearTimeout(safetyTimeout)
 
-            // 3. Analysis (Slowest - Web Search + Thinking)
-            generateAnalysisAction(project.id, project.idea, project.targetUsers, project.businessType)
-                .then(() => {
-                    console.log('[Client] Analysis done')
-                    router.refresh()
-                })
+            // Refresh to fetch all new data
+            router.refresh()
+
+            // Small delay to ensure UI renders before hiding loader
+            await new Promise(resolve => setTimeout(resolve, 500))
 
         } catch (error) {
-            console.error('Generation init failed', error)
-            setIsGenerating(false)
+            console.error('Generation failed', error)
             clearTimeout(safetyTimeout)
+        } finally {
+            setIsGenerating(false)
         }
     }
 

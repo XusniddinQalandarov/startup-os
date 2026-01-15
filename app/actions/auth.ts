@@ -44,9 +44,11 @@ export async function signIn(formData: FormData) {
 export async function signInWithGoogle(next: string = '/profile') {
   const supabase = await createClient()
   
-  // Hardcode production URL to ensure correct redirect
-  const isProduction = process.env.NODE_ENV === 'production'
-  const origin = isProduction ? 'https://idey.studio' : 'http://localhost:3000'
+  // Dynamically detect origin from request headers (works in all environments)
+  const headersList = await headers()
+  const host = headersList.get('host') || 'localhost:3000'
+  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const origin = `${protocol}://${host}`
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
