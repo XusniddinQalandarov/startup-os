@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui'
 import { Container } from '@/components/layout'
 import { AnimatedBackground } from '@/components/ui/animated-background'
-import { HowItWorks, AITechnology, Features, PricingPlans, Footer } from '@/components/landing'
+import { HowItWorks, AITechnology, Features, PricingPlans, Footer, AppShowcase } from '@/components/landing'
 import { getUser } from '@/app/actions/auth'
 
 export default async function LandingPage() {
@@ -166,6 +166,9 @@ export default async function LandingPage() {
         <section id="how-it-works">
           <HowItWorks />
         </section>
+
+        {/* App Screenshots Showcase */}
+        <AppShowcase />
 
         {/* AI Technology Section */}
         <AITechnology />

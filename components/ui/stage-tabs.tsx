@@ -60,44 +60,46 @@ export function StageTabs({ tabs, activeTab, onTabChange, children }: StageTabsP
 
             {/* Tab Navigation */}
             <div className="relative">
-                {/* Tab container with subtle bg */}
-                <div
-                    ref={tabsRef}
-                    className="relative flex items-center gap-1 p-1 bg-gray-100/80 rounded-2xl w-fit"
-                >
-                    {/* Animated indicator */}
+                {/* Scrollable tab container for mobile */}
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                     <div
-                        className="absolute top-1 h-[calc(100%-8px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out"
-                        style={{
-                            left: indicatorStyle.left,
-                            width: indicatorStyle.width
-                        }}
-                    />
+                        ref={tabsRef}
+                        className="relative flex items-center gap-1 p-1 bg-gray-100/80 rounded-2xl w-fit min-w-max"
+                    >
+                        {/* Animated indicator */}
+                        <div
+                            className="absolute top-1 h-[calc(100%-8px)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out"
+                            style={{
+                                left: indicatorStyle.left,
+                                width: indicatorStyle.width
+                            }}
+                        />
 
-                    {/* Tab buttons */}
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            data-tab={tab.id}
-                            onClick={() => handleTabClick(tab.id)}
-                            className={cn(
-                                "relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200",
-                                activeTab === tab.id
-                                    ? "text-gray-900"
-                                    : "text-gray-500 hover:text-gray-700"
-                            )}
-                        >
-                            {tab.icon && (
-                                <span className={cn(
-                                    "transition-colors",
-                                    activeTab === tab.id ? "text-indigo-600" : "text-gray-400"
-                                )}>
-                                    {tab.icon}
-                                </span>
-                            )}
-                            {tab.label}
-                        </button>
-                    ))}
+                        {/* Tab buttons */}
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                data-tab={tab.id}
+                                onClick={() => handleTabClick(tab.id)}
+                                className={cn(
+                                    "relative z-10 flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors duration-200 whitespace-nowrap",
+                                    activeTab === tab.id
+                                        ? "text-gray-900"
+                                        : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                {tab.icon && (
+                                    <span className={cn(
+                                        "transition-colors",
+                                        activeTab === tab.id ? "text-indigo-600" : "text-gray-400"
+                                    )}>
+                                        {tab.icon}
+                                    </span>
+                                )}
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
