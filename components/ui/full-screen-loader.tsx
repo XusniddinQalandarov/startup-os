@@ -45,7 +45,7 @@ export function FullScreenLoader({ isLoading, message = 'Generating analysis...'
     if (!isLoading) return null
 
     return (
-        <div className="fixed inset-0 z-[9999] h-screen w-screen overflow-hidden">
+        <div className="fixed inset-0 z-[9999] h-screen w-screen overflow-hidden bg-black">
             {/* Fullscreen video background */}
             <video
                 autoPlay
