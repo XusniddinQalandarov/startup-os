@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
@@ -78,6 +79,7 @@ export function BuildPlanStageClient({
     tasks,
     isPremium = false // Default to locked
 }: BuildPlanStageClientProps) {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState('mvp')
     const [isGenerating, setIsGenerating] = useState(false)
     const buildTime = getBuildTime(roadmap)
@@ -85,11 +87,21 @@ export function BuildPlanStageClient({
 
     const handleGenerateAll = async () => {
         setIsGenerating(true)
+
+        // Safety timeout - clear loading after 90s max (Build Plan has 4 operations)
+        const safetyTimeout = setTimeout(() => {
+            console.warn('[Build Plan] Safety timeout triggered')
+            setIsGenerating(false)
+            router.refresh()
+        }, 90000)
+
         try {
             await generateBuildPlan(project.id, project.idea, project.founderType)
-            setIsGenerating(false)
+            router.refresh()
         } catch (error) {
             console.error('Generation failed', error)
+        } finally {
+            clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
     }

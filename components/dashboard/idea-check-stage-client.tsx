@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
@@ -8,7 +8,7 @@ import { OverviewView } from '@/components/dashboard/overview-view'
 import { QuestionsView } from '@/components/dashboard/questions-view'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { Button } from '@/components/ui'
-import { generateIdeaCheck } from '@/app/actions/idea-check'
+import { generateEvaluationAction, generateQuestionsAction, generateAnalysisAction } from '@/app/actions/idea-check'
 import type { IdeaEvaluation, CustomerQuestion, Startup } from '@/types'
 
 interface IdeaCheckStageClientProps {
@@ -105,17 +105,63 @@ export function IdeaCheckStageClient({
     // Check if we have valid data for all sections
     const hasData = !!evaluation && (Array.isArray(questions) && questions.length > 0) && !!problemData
 
+    // Check for auto-start query param
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search)
+            if (params.get('start_analysis') === 'true') {
+                // Remove param from URL without refresh
+                const newUrl = window.location.pathname
+                window.history.replaceState({}, '', newUrl)
+
+                // Trigger generation
+                handleGenerateAll()
+            }
+        }
+    }, [])
+
     const handleGenerateAll = async () => {
         setIsGenerating(true)
-        try {
-            await generateIdeaCheck(project.id, project.idea, project.targetUsers, project.businessType)
-            // Force router to refresh and fetch new data
-            router.refresh()
-        } catch (error) {
-            console.error('Generation failed', error)
-        } finally {
-            // Always ensure loading state is cleared
+
+        // Safety timeout - just in case everything hangs
+        const safetyTimeout = setTimeout(() => {
             setIsGenerating(false)
+            router.refresh()
+        }, 45000)
+
+        try {
+            // Trigger all 3 actions in parallel, but handle them independently
+            // This allows the UI to update as pieces finish (Streaming-like UX)
+
+            // 1. Evaluation (Fastest)
+            // We await this one to ensure at least some data is ready before hiding loader
+            generateEvaluationAction(project.id, project.idea, project.targetUsers, project.businessType)
+                .then(() => {
+                    console.log('[Client] Evaluation done')
+                    router.refresh()
+                    // Hide loader as soon as the first/most critical part is done
+                    setIsGenerating(false)
+                    clearTimeout(safetyTimeout)
+                })
+
+            // 2. Questions (Medium)
+            generateQuestionsAction(project.id, project.idea, project.businessType)
+                .then(() => {
+                    console.log('[Client] Questions done')
+                    router.refresh()
+                })
+
+            // 3. Analysis (Slowest - Web Search + Thinking)
+            generateAnalysisAction(project.id, project.idea, project.targetUsers, project.businessType)
+                .then(() => {
+                    console.log('[Client] Analysis done')
+                    router.refresh()
+                })
+
+        } catch (error) {
+            console.error('Generation init failed', error)
+            setIsGenerating(false)
+            clearTimeout(safetyTimeout)
         }
     }
 

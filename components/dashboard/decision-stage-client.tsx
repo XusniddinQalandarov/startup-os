@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
@@ -93,6 +94,7 @@ export function DecisionStageClient({
     evaluation,
     isPremium = false // Default to locked
 }: DecisionStageClientProps) {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState('analysis')
     const [isGenerating, setIsGenerating] = useState(false)
     const verdict = getVerdict(evaluation)
@@ -100,11 +102,21 @@ export function DecisionStageClient({
 
     const handleGenerateAll = async () => {
         setIsGenerating(true)
+
+        // Safety timeout - clear loading after 60s max
+        const safetyTimeout = setTimeout(() => {
+            console.warn('[Decision] Safety timeout triggered')
+            setIsGenerating(false)
+            router.refresh()
+        }, 60000)
+
         try {
             await generateDecision(project.id, project.idea, project.targetUsers, project.businessType)
-            setIsGenerating(false)
+            router.refresh()
         } catch (error) {
             console.error('Generation failed', error)
+        } finally {
+            clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
     }

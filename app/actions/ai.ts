@@ -118,44 +118,60 @@ export async function generateCustomerQuestions(startupId: string, idea: string,
   const supabase = await createClient()
   console.log(`[Questions] Starting generation for: "${idea}"`)
 
-  // Optimized prompt for speed
+  // Ultra-strict prompt for reliable JSON
   const prompt = `Generate 10 customer interview questions for: "${idea}"
-${businessType ? `Business: ${businessType}` : ''}
 
-REQUIRED: 7 with "flagType":"ask", 3 with "flagType":"avoid"
+STRICT FORMATTING RULES:
+1. Return ONLY a JSON Array starting with [ and ending with ].
+2. Do NOT wrap the array in any object like {"questions": ...}.
+3. Do NOT include markdown formatting like \`\`\`json.
 
-Good (ask): Past behavior, specific moments, current workarounds
-Bad (avoid): Hypothetical, leading, feature requests
+Required Structure:
+[
+  {"id":"1","category":"Discovery","question":"...","flagType":"ask","insight":"..."},
+  {"id":"2","category":"Pain","question":"...","flagType":"ask","insight":"..."},
+  ...
+  {"id":"10","category":"Solution","question":"...","flagType":"avoid","insight":"..."}
+]
 
-JSON format:
-{
-  "questions": [
-    {"id":"1","category":"Discovery","question":"Walk me through last time you...","flagType":"ask","insight":"Why this works"},
-    {"id":"2","category":"Pain","question":"What's hardest about...","flagType":"ask","insight":"Reveals friction"},
-    {"id":"3","category":"Current","question":"How do you handle this now?","flagType":"ask","insight":"Shows behavior"},
-    {"id":"4","category":"Decision","question":"What made you try X?","flagType":"ask","insight":"Uncovers priorities"},
-    {"id":"5","category":"Budget","question":"How much time/money spent?","flagType":"ask","insight":"Shows value"},
-    {"id":"6","category":"Discovery","question":"Who else decides?","flagType":"ask","insight":"Stakeholders"},
-    {"id":"7","category":"Pain","question":"What if you don't solve this?","flagType":"ask","insight":"Urgency"},
-    {"id":"8","category":"Hypothetical","question":"Would you pay $X?","flagType":"avoid","insight":"Future lies"},
-    {"id":"9","category":"Leading","question":"Wouldn't this save time?","flagType":"avoid","insight":"Biased"},
-    {"id":"10","category":"Solution","question":"What features?","flagType":"avoid","insight":"Design trap"}
-  ]
-}
-
-Generate 10 total.`
+Content Requirements:
+- 7 "ask" questions (Good: open-ended, about past behavior/problems)
+- 3 "avoid" questions (Bad: hypothetical, pitching, future-tense, leading)
+- Categories: Discovery, Pain, Current, Decision, Budget, Hypothetical, Leading, Solution`
 
   try {
     console.log('[Questions] Starting...')
-    const response = await callOpenRouterJSON<{ questions: CustomerQuestion[] }>(
-      'Return only valid JSON. EXACTLY 10 questions.',
+    const response = await callOpenRouterJSON<CustomerQuestion[]>(
+      'You are a JSON-only API. Return a raw JSON array. No markdown. No wrapping objects.',
       prompt,
-      'fast'
+      'fast',
+      2000
     )
     console.log('[Questions] Done')
     
-    // Handle both wrapped and unwrapped responses (fallback)
-    const questions = Array.isArray(response) ? response : response.questions || []
+    // Handle both array and object responses (including "response" key wrapper)
+    let questions: any[] = []
+    
+    if (Array.isArray(response)) {
+      questions = response
+    } else if ((response as any).questions) {
+      questions = (response as any).questions
+    } else if ((response as any).response) {
+      // Handle case where AI returns { "response": [...] } or { "response": "[...]" }
+      const respValue = (response as any).response
+      if (Array.isArray(respValue)) {
+        questions = respValue
+      } else if (typeof respValue === 'string') {
+        try {
+          // It might be a stringified JSON array
+          const parsed = JSON.parse(respValue)
+          if (Array.isArray(parsed)) questions = parsed
+        } catch (e) {
+          console.warn('[Questions] Failed to parse stringified response key', e)
+        }
+      }
+    }
+    
     console.log(`[Questions] Extracted ${questions.length} questions`)
 
     if (!Array.isArray(questions) || questions.length === 0) {

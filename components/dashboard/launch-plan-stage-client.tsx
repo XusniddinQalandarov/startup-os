@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { PremiumLock } from '@/components/ui/premium-lock'
@@ -67,6 +68,7 @@ export function LaunchPlanStageClient({
     analysisData,
     isPremium = false // Default to locked
 }: LaunchPlanStageClientProps) {
+    const router = useRouter()
     const [activeTab, setActiveTab] = useState('gtm')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
@@ -84,11 +86,21 @@ export function LaunchPlanStageClient({
 
     const handleGenerateAll = async () => {
         setIsGenerating(true)
+
+        // Safety timeout - clear loading after 60s max
+        const safetyTimeout = setTimeout(() => {
+            console.warn('[Launch Plan] Safety timeout triggered')
+            setIsGenerating(false)
+            router.refresh()
+        }, 60000)
+
         try {
             await generateLaunchPlan(project.id, project.idea, project.targetUsers, project.businessType)
-            setIsGenerating(false)
+            router.refresh()
         } catch (error) {
             console.error('Generation failed', error)
+        } finally {
+            clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
     }

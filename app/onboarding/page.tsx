@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Button, Input, Textarea, Card } from '@/components/ui'
 import { Container } from '@/components/layout'
 import { AnimatedBackground } from '@/components/ui/animated-background'
+import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { cn } from '@/lib/utils'
 import { createProject } from '@/app/actions/projects'
 import type { OnboardingData, BusinessType, FounderType } from '@/types'
@@ -247,7 +248,8 @@ export default function OnboardingPage() {
             return
         }
 
-        router.push(`/dashboard/${result.id}`)
+        // Navigate immediately - pass query param to trigger generation on dashboard
+        router.push(`/dashboard/${result.id}?start_analysis=true`)
     }
 
     const stepProps: StepProps = {
