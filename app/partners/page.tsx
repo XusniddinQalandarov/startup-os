@@ -38,8 +38,8 @@ export default function PartnersPage() {
       {/* Main Content */}
       <main className="flex-1 relative z-10 w-full">
         {/* Hero Section */}
-        <section className="pt-24 pb-16">
-          <Container className="max-w-4xl text-center">
+        <section className="flex items-center justify-center min-h-[90vh]">
+          <Container className="max-w-4xl text-center py-24">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-100 shadow-sm mb-8">
               <span className="text-sm font-medium text-indigo-600">For Organizations</span>
             </div>
