@@ -151,3 +151,180 @@ body::after {
 ::selection {
   background: rgba(139, 92, 246, 0.3);
 }
+
+/* ========== Print Styles for PDF Export ========== */
+@media print {
+  /* Remove all background effects and ensure clean white background */
+  body,
+  body::before,
+  body::after {
+    background: white !important;
+  }
+
+  /* Hide navigation, headers, sidebars */
+  header,
+  nav,
+  .sidebar,
+  aside,
+  button:not(.print-keep),
+  [class*="sticky"],
+  [class*="fixed"] {
+    display: none !important;
+  }
+
+  /* Ensure all text is fully opaque black for print */
+  * {
+    color: #000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+
+  /* Override gradient text colors */
+  .text-emerald-600,
+  .text-green-600 {
+    color: #059669 !important;
+  }
+
+  .text-amber-600,
+  .text-yellow-600 {
+    color: #d97706 !important;
+  }
+
+  .text-red-500,
+  .text-red-600 {
+    color: #dc2626 !important;
+  }
+
+  .text-gray-500,
+  .text-gray-600,
+  .text-gray-700 {
+    color: #374151 !important;
+  }
+
+  .text-gray-900 {
+    color: #111827 !important;
+  }
+
+  /* Ensure backgrounds print correctly */
+  .bg-emerald-50,
+  .bg-green-50,
+  .from-emerald-50,
+  .to-teal-50 {
+    background-color: #ecfdf5 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-amber-50,
+  .bg-yellow-50,
+  .from-amber-50,
+  .to-yellow-50 {
+    background-color: #fffbeb !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .bg-red-50,
+  .from-red-50,
+  .to-rose-50 {
+    background-color: #fef2f2 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Force borders to print */
+  .border,
+  [class*="border-"] {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .border-emerald-200 {
+    border-color: #a7f3d0 !important;
+  }
+
+  .border-amber-200 {
+    border-color: #fde68a !important;
+  }
+
+  .border-red-200 {
+    border-color: #fecaca !important;
+  }
+
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper spacing from top for first page */
+  main,
+  .print-content {
+    margin-top: 0 !important;
+    padding-top: 20mm !important;
+  }
+
+  /* Better table printing */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  /* Adjust font sizes for print */
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 24pt;
+  }
+
+  h2 {
+    font-size: 20pt;
+  }
+
+  h3 {
+    font-size: 16pt;
+  }
+
+  h4 {
+    font-size: 14pt;
+  }
+
+  /* Remove shadows for cleaner print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure links are distinguishable */
+  a {
+    text-decoration: underline;
+  }
+
+  /* Make sure rounded corners still show */
+  .rounded-2xl,
+  .rounded-xl {
+    border-radius: 12pt;
+  }
+}

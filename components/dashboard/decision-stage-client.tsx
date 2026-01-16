@@ -335,11 +335,11 @@ export function DecisionStageClient({
                     </TabPanel>
 
                     <TabPanel isActive={activeTab === 'verdict'}>
-                        <div className="space-y-6">
+                        <div className="space-y-6 print-content">
                             {evaluation ? (
                                 <div className="space-y-8">
                                     {/* Verdict Banner */}
-                                    <div className={`bg-gradient-to-br ${verdict.verdict === 'Build' ? 'from-emerald-50 to-teal-50 border-emerald-200' :
+                                    <div className={`avoid-break bg-gradient-to-br ${verdict.verdict === 'Build' ? 'from-emerald-50 to-teal-50 border-emerald-200' :
                                         verdict.verdict === 'Pivot' ? 'from-amber-50 to-yellow-50 border-amber-200' :
                                             'from-red-50 to-rose-50 border-red-200'
                                         } rounded-2xl border p-8 text-center`}>
@@ -354,7 +354,7 @@ export function DecisionStageClient({
 
                                     {/* Executive Summary */}
                                     {evaluation.executiveSummary && (
-                                        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                                        <div className="avoid-break bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-3">Executive Summary</h3>
                                             <div className="prose prose-sm max-w-none text-gray-600">
                                                 <p>{evaluation.executiveSummary}</p>
@@ -363,7 +363,7 @@ export function DecisionStageClient({
                                     )}
 
                                     {/* Detailed Scorecard */}
-                                    <div id="scorecard-section">
+                                    <div id="scorecard-section" className="page-break-before">
                                         <ScoreCard evaluation={evaluation} ideaType={project.idea_type} />
                                     </div>
 

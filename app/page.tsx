@@ -36,6 +36,9 @@ export default async function LandingPage() {
                 <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                   Pricing
                 </a>
+                <Link href="/partners" className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+                  For Organizations
+                </Link>
               </nav>
             </div>
 

@@ -54,23 +54,26 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
         },
     ]
 
-    // Helper to get color for score
+    // Helper to get color for 1-5 scores
     const getScoreColor = (score: number) => {
-        if (score >= 80) return 'text-emerald-600 bg-emerald-50'
-        if (score >= 60) return 'text-amber-600 bg-amber-50'
+        if (score >= 4) return 'text-emerald-600 bg-emerald-50'
+        if (score >= 3) return 'text-amber-600 bg-amber-50'
         return 'text-red-600 bg-red-50'
     }
 
     const getScoreBarColor = (score: number) => {
-        if (score >= 80) return 'bg-emerald-500'
-        if (score >= 60) return 'bg-amber-500'
+        if (score >= 4) return 'bg-emerald-500'
+        if (score >= 3) return 'bg-amber-500'
         return 'bg-red-500'
     }
+
+    // Convert 1-5 score to percentage for visual display
+    const scoreToPercentage = (score: number) => (score / 5) * 100
 
     return (
         <div className="space-y-8">
             {/* Total Score Header */}
-            <div className="flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="avoid-break flex flex-col sm:flex-row gap-6 items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
                 <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-lg font-semibold text-gray-900">Weighted Score</h3>
                     <p className="text-sm text-gray-500">Based on ideY Standard v1 Framework</p>
@@ -144,13 +147,16 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
                                         </td>
                                         <td className="py-5 px-6 align-top">
                                             <div className="flex flex-col items-end gap-2">
-                                                <span className={`text-lg font-bold ${getScoreColor(score).split(' ')[0]}`}>
-                                                    {score}
-                                                </span>
+                                                <div className="text-center">
+                                                    <span className={`text-lg font-bold ${getScoreColor(score).split(' ')[0]}`}>
+                                                        {score}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400 ml-0.5">/5</span>
+                                                </div>
                                                 <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full rounded-full ${getScoreBarColor(score)}`}
-                                                        style={{ width: `${score}%` }}
+                                                        style={{ width: `${scoreToPercentage(score)}%` }}
                                                     />
                                                 </div>
                                             </div>
@@ -164,7 +170,7 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
             </div>
 
             {/* Summary Sections */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="avoid-break grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100">
                     <h4 className="flex items-center gap-2 text-lg font-bold text-emerald-900 mb-4">
                         <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
