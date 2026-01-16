@@ -150,8 +150,13 @@ export function IdeaCheckStageClient({
 
             clearTimeout(safetyTimeout)
 
-            // Hard reload to guarantee fresh data is displayed
-            window.location.reload()
+            // Hard reload to guarantee fresh data is displayed (bypass cache)
+            if (typeof window !== 'undefined') {
+                // Force cache bypass by appending timestamp
+                const url = new URL(window.location.href)
+                url.searchParams.set('_t', Date.now().toString())
+                window.location.href = url.toString()
+            }
 
         } catch (error) {
             console.error('Generation failed', error)

@@ -9,6 +9,10 @@ interface PageProps {
     params: Promise<{ projectId: string }>
 }
 
+// Force dynamic rendering to prevent caching issues with AI-generated content
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // STAGE 1: IDEA CHECK
 export default async function IdeaCheckPage({ params }: PageProps) {
     const { projectId } = await params
