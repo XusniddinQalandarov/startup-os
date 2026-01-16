@@ -38,7 +38,7 @@ export default function PartnersPage() {
       {/* Main Content */}
       <main className="flex-1 relative z-10 w-full">
         {/* Hero Section */}
-        <section className="flex items-center justify-center min-h-[90vh]">
+        <section className="flex items-center justify-center min-h-[85vh]">
           <Container className="max-w-4xl text-center py-24">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-indigo-100 shadow-sm mb-8">
               <span className="text-sm font-medium text-indigo-600">For Organizations</span>
@@ -74,7 +74,7 @@ export default function PartnersPage() {
         </section>
 
         {/* Who We Serve */}
-        <section className="py-16 bg-white/50 backdrop-blur-sm">
+        <section className="py-16 backdrop-blur-sm">
           <Container className="max-w-6xl">
             <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-900">
               Built for the Innovation Ecosystem
