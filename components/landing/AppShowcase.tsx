@@ -135,7 +135,7 @@ export function AppShowcase() {
                                                 alt={screenshot.title}
                                                 fill
                                                 className="object-fit object-top"
-                                                priority={index === 0}
+                                                sizes="(max-width: 1024px) 100vw, 1024px"
                                             />
                                         </div>
                                     ))}

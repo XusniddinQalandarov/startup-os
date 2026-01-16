@@ -249,7 +249,7 @@ export function PricingPlans() {
                 <p className="text-center text-sm text-gray-500 mt-12">
                     All plans include SSL security, 99.9% uptime SLA, and regular updates.
                     <br />
-                    Questions? <Link href="/contact" className="text-indigo-600 hover:text-indigo-700 font-medium">Contact our team</Link>
+                    Questions? <a href="mailto:xusniddinqalandarov2004@gmail.com" className="text-indigo-600 hover:text-indigo-700 font-medium">Contact our team</a>
                 </p>
             </Container>
         </section>

@@ -134,7 +134,12 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <span className="text-sm text-gray-400 italic">No details available</span>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-sm text-gray-400 italic">V1 Evaluation (Legacy)</span>
+                                                    <span className="text-xs text-indigo-500 cursor-pointer hover:underline" onClick={() => window.location.reload()}>
+                                                        Re-evaluate for details
+                                                    </span>
+                                                </div>
                                             )}
                                         </td>
                                         <td className="py-5 px-6 align-top">

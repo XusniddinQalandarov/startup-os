@@ -770,8 +770,10 @@ export const getAiOutput = cache(async function getAiOutput(startupId: string, o
       .maybeSingle()
     
     if (data) {
-      // Check if it's v1 format (has version field or new columns)
-      if (data.version === 'v1' || data.total_score !== null) {
+      // Check if it's v1 format (has version field or new columns) AND uses 1-5 scale
+      const isV1 = (data.version === 'v1' || data.total_score !== null) && (data.problem_severity <= 5)
+      
+      if (isV1) {
         return {
           version: 'v1',
           scores: {
