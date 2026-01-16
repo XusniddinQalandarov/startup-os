@@ -74,7 +74,7 @@ export default function PartnersPage() {
         </section>
 
         {/* Who We Serve */}
-        <section className="py-16 backdrop-blur-sm">
+        <section className="py-16">
           <Container className="max-w-6xl">
             <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-900">
               Built for the Innovation Ecosystem
