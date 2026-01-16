@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation'
 import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { StageStatusBadge, type StageStatus } from '@/components/ui/stage-status-badge'
+import { ConfirmLockModal } from '@/components/ui/confirm-lock-modal'
+import { OutdatedWarning } from '@/components/ui/outdated-warning'
 import { Button } from '@/components/ui'
 import { MvpView } from '@/components/dashboard/mvp-view'
 import { TechView } from '@/components/dashboard/tech-view'
 import { TasksView } from '@/components/dashboard/tasks-view'
 import { RoadmapView } from '@/components/dashboard/roadmap-view'
 import { generateBuildPlan } from '@/app/actions/build-plan'
+import { lockStage, unlockStage } from '@/app/actions/stages'
 import type { MvpFeature, TechStackRecommendation, RoadmapPhase, Task, Startup } from '@/types'
 
 interface BuildPlanStageClientProps {
@@ -20,6 +24,7 @@ interface BuildPlanStageClientProps {
     roadmap: RoadmapPhase[] | null
     tasks: Task[]
     isPremium?: boolean
+    stageStatus?: StageStatus
 }
 
 const tabs = [
@@ -77,11 +82,15 @@ export function BuildPlanStageClient({
     techStack,
     roadmap,
     tasks,
-    isPremium = false // Default to locked
+    isPremium = false,
+    stageStatus = 'draft'
 }: BuildPlanStageClientProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('mvp')
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+    const [isUnlocking, setIsUnlocking] = useState(false)
+
     const buildTime = getBuildTime(roadmap)
     const hasData = features && features.length > 0
 
@@ -103,6 +112,25 @@ export function BuildPlanStageClient({
             console.error('Generation failed', error)
             clearTimeout(safetyTimeout)
             setIsGenerating(false)
+        }
+    }
+
+    const handleLock = async () => {
+        const result = await lockStage(project.id, 'build_plan')
+        if (!result.success) {
+            console.error('Failed to lock stage:', result.error)
+        }
+    }
+
+    const handleUnlock = async () => {
+        setIsUnlocking(true)
+        try {
+            const result = await unlockStage(project.id, 'build_plan')
+            if (!result.success) {
+                console.error('Failed to unlock stage:', result.error)
+            }
+        } finally {
+            setIsUnlocking(false)
         }
     }
 
@@ -133,6 +161,21 @@ export function BuildPlanStageClient({
     return (
         <PremiumLock isLocked={!isPremium}>
             <div className="space-y-6">
+                <ConfirmLockModal
+                    isOpen={isLockModalOpen}
+                    onClose={() => setIsLockModalOpen(false)}
+                    onConfirm={handleLock}
+                    stageName="Build Plan"
+                />
+
+                {stageStatus === 'outdated' && (
+                    <OutdatedWarning
+                        stageName="Build Plan"
+                        onRegenerate={handleGenerateAll}
+                        isRegenerating={isGenerating}
+                    />
+                )}
+
                 <FullScreenLoader isLoading={isGenerating} message="Scoping MVP, choosing tech stack, and planning roadmap..." />
 
                 {/* Stage Header with Summary */}
@@ -144,7 +187,10 @@ export function BuildPlanStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Build Plan</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Build Plan</h1>
+                                <StageStatusBadge status={stageStatus} />
+                            </div>
                             <p className="text-xs sm:text-sm text-gray-500">What does it take to build an MVP?</p>
                         </div>
                     </div>
@@ -154,6 +200,7 @@ export function BuildPlanStageClient({
                         {!hasData && (
                             <Button
                                 onClick={handleGenerateAll}
+                                disabled={isGenerating || stageStatus === 'locked'}
                                 className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-violet-200/50 border-0"
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,6 +208,44 @@ export function BuildPlanStageClient({
                                 </svg>
                                 Generate Plan
                             </Button>
+                        )}
+                        {hasData && (
+                            <>
+                                <Button
+                                    onClick={handleGenerateAll}
+                                    disabled={isGenerating || stageStatus === 'locked'}
+                                    variant="secondary"
+                                >
+                                    {stageStatus === 'locked' ? 'Analysis Locked' : (isGenerating ? 'Regenerating...' : 'Regenerate')}
+                                </Button>
+                                {stageStatus === 'locked' ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleUnlock}
+                                        disabled={isUnlocking}
+                                        className="border-violet-200 text-violet-900 hover:bg-violet-50 hover:text-violet-900"
+                                    >
+                                        {isUnlocking ? 'Unlocking...' : (
+                                            <>
+                                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                </svg>
+                                                Unlock to Edit
+                                            </>
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => setIsLockModalOpen(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Confirm & Lock
+                                    </Button>
+                                )}
+                            </>
                         )}
 
                         <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">

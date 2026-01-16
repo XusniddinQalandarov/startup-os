@@ -16,7 +16,7 @@ import type {
 
 const ANTI_HYPE_PROMPT = `You are a brutally honest startup advisor. You do NOT hype ideas. You give conservative, realistic assessments. If something is weak, say it clearly. If competition is fierce, don't sugarcoat it. Your goal is to help founders avoid wasting time on bad ideas and focus on what matters.`
 
-// ========== Evaluation ==========
+// ========== Evaluation (ideY Standard v1) ==========
 
 interface EvaluationInput {
   idea: string
@@ -26,88 +26,229 @@ interface EvaluationInput {
   founderType?: string
 }
 
+const IDEY_STANDARD_V1_PROMPT = `You are ideY, an AI-powered startup evaluation system designed for accelerators, incubators, startup studios, and professional investors.
+
+Your role is NOT to inspire founders. Your role is to provide structured, unbiased, and explainable evaluations of early-stage startup ideas using the ideY Standard v1 framework.
+
+EVALUATION DIMENSIONS (score 1-5 each):
+
+1. PROBLEM SEVERITY (Weight: 15%)
+   Question: How real and painful is the problem?
+   1 = Problem is vague, hypothetical, or cosmetic
+   2 = Problem exists but low urgency or infrequent
+   3 = Clear problem with moderate pain
+   4 = Frequent, frustrating problem with current workarounds
+   5 = Urgent "hair-on-fire" problem users actively want solved
+
+2. TARGET CUSTOMER CLARITY (Weight: 15%)
+   Question: Do we clearly know who this is for?
+   1 = "Everyone" or undefined customer
+   2 = Broad segment, poorly specified
+   3 = Defined segment with some assumptions
+   4 = Specific persona with context and use case
+   5 = Narrow, well-understood customer with strong insight
+
+3. MARKET OPPORTUNITY (Weight: 15%)
+   Question: Is this worth building at all?
+   1 = Very small or stagnant market
+   2 = Niche market with limited upside
+   3 = Medium-sized or emerging market
+   4 = Large or fast-growing market
+   5 = Massive or expanding market with tailwinds
+
+4. COMPETITIVE DIFFERENTIATION (Weight: 15%)
+   Question: Why this over existing alternatives?
+   1 = No clear differentiation
+   2 = Minor feature differences
+   3 = Some unique angle, easy to copy
+   4 = Clear differentiation or advantage
+   5 = Strong moat: insight, tech, data, or distribution
+
+5. EXECUTION COMPLEXITY (Weight: 15%)
+   Question: How hard is this to build and ship?
+   ⚠️ Lower complexity = higher score
+   1 = Extremely complex, long R&D, many dependencies
+   2 = High complexity, specialized skills required
+   3 = Moderate complexity, feasible with effort
+   4 = Straightforward build with existing tools
+   5 = Simple MVP possible quickly
+
+6. TRACTION/VALIDATION (Weight: 15%)
+   Question: Is there any real-world signal?
+   1 = Pure idea, no validation
+   2 = Concept only, no users
+   3 = Early users, pilots, or waitlist
+   4 = Active users or revenue signal
+   5 = Strong usage, growth, or paying customers
+
+7. RISK PROFILE (Weight: 10%)
+   Question: How risky is this overall?
+   ⚠️ Lower risk = higher score
+   1 = Multiple critical risks (market, legal, tech)
+   2 = High risk in one major area
+   3 = Moderate, manageable risks
+   4 = Risks identified with mitigation
+   5 = Low-risk execution path
+
+VERDICT LOGIC:
+- Total Score 80-100 → BUILD (Strong fundamentals, proceed)
+- Total Score 60-79 → PIVOT (Promising, but weaknesses must be addressed)
+- Total Score below 60 → KILL (High risk, rethink or abandon)
+
+For each dimension you MUST provide:
+- Score (1-5)
+- 2-3 bullet explanation
+- Key risk or assumption
+
+Tone: Professional, analytical, institution-grade, neutral and precise.
+Do NOT use hype, encouragement, or emotional language.`
+
+
+// ========== Classification (B2C vs B2B) ==========
+
+export async function classifyIdea(idea: string, businessType?: string): Promise<'B2C' | 'B2B' | 'B2G' | 'Mixed'> {
+  const prompt = `Classify this startup idea as one of:
+- B2C (end consumers)
+- B2B (companies as buyers)
+- B2G (governments)
+- Mixed
+
+IDEA: ${idea}
+${businessType ? `BUSINESS TYPE: ${businessType}` : ''}
+
+Base classification on buyer, sales motion, and value delivery.
+Return only the label.`
+
+  try {
+    const response = await callOpenRouterJSON<{ classification: string }>(
+      'You are a classifier. Return simple JSON.',
+      prompt + '\nReturn JSON: {"classification": "B2B"}',
+      'fast'
+    )
+    const label = (response as any).classification || 'Mixed'
+    return ['B2C', 'B2B', 'B2G', 'Mixed'].includes(label) ? label : 'Mixed'
+  } catch (error) {
+    console.error('[Classification] Error:', error)
+    return 'Mixed'
+  }
+}
+
 export async function evaluateIdea(startupId: string, input: EvaluationInput): Promise<IdeaEvaluation | null> {
   const supabase = await createClient()
 
-  const prompt = `Evaluate this startup idea using the PAIN SCORE methodology.
+  // 1. Classify the idea type first
+  const ideaType = await classifyIdea(input.idea, input.businessType)
+  console.log(`[Evaluation] Classified as: ${ideaType}`)
 
-IDEA: ${input.idea}
+  // 2. Select Prompt & Weights based on Type
+  const isB2B = ideaType === 'B2B' || ideaType === 'B2G'
+  
+  const B2B_PROMPT = `You are a B2B startup evaluator used by accelerators, VCs, and startup studios.
+Evaluate this idea STRICTLY as a B2B business.
+Be skeptical. Assume limited attention and budget from buyers.
+
+EVALUATION DIMENSIONS (1-5 score):
+1. PROBLEM SEVERITY (Weight: 20%) - Is this a mission-critical or budgeted problem?
+2. TARGET CUSTOMER CLARITY (Weight: 15%) - Is the economic buyer clearly defined? (renamed from Buyer Clarity)
+3. MARKET OPPORTUNITY (Weight: 15%) - Is the market large and addressable? (renamed from ICP Precision)
+4. COMPETITIVE DIFFERENTIATION (Weight: 10%) - Strong moat/switching costs? (renamed from Moat)
+5. EXECUTION COMPLEXITY (Weight: 10%) - Sales complexity & delivery friction?
+6. TRACTION/VALIDATION (Weight: 10%) - Expansion potential & detailed signals?
+7. RISK PROFILE (Weight: 20%) - Willingness to Pay evidence? (Using Risk for WTP slot conceptually or keep standard?)
+
+WAIT - To maintain backward compatibility with the database schema (7 fixed columns), we will MAP the B2B concepts to the existing 7 dimensions:
+
+MAPPING (B2B Concept -> DB Column):
+1. Problem Severity -> problem_severity (20%)
+2. Buyer Clarity -> target_customer_clarity (15%)
+3. ICP Precision -> market_opportunity (15%)  <-- REPURPOSED
+4. Competitive Moat -> competitive_differentiation (10%)
+5. Sales Complexity -> execution_complexity (10%)
+6. Expansion Potential -> traction_validation (10%) <-- REPURPOSED
+7. Willingness to Pay -> risk_profile (20%) <-- REPURPOSED (We invert the score: High WTP = High Score. Risk is usually Low Risk = High Score. Here High Score = Good WTP).
+
+Scores must be 1-5 (where 5 is best). 
+For Sales Complexity: 5 = Low Friction/Easy Sales, 1 = Impossible Sales.
+
+Return JSON with exact structure:
+{
+  "version": "v1",
+  "scores": {
+    "problemSeverity": <1-5>,
+    "targetCustomerClarity": <1-5>,
+    "marketOpportunity": <1-5>,
+    "competitiveDifferentiation": <1-5>,
+    "executionComplexity": <1-5>,
+    "tractionValidation": <1-5>,
+    "riskProfile": <1-5>
+  },
+  "scoreDetails": {
+    "problemSeverity": { "score": <1-5>, "bullets": ["..."], "keyRisk": "..." },
+    ... etc for all 7 ...
+  },
+  "totalScore": <weighted average 0-100>,
+  "verdict": "<BUILD|PIVOT|KILL>",
+  "verdictRationale": "...",
+  "keyStrengths": ["..."],
+  "keyRisks": ["..."],
+  "executiveSummary": "..."
+}
+
+Calculate totalScore as: (problemSeverity*20 + targetCustomerClarity*15 + marketOpportunity*15 + competitiveDifferentiation*10 + executionComplexity*10 + tractionValidation*10 + riskProfile*20) / 5 * 20`
+
+  const selectedPrompt = isB2B ? B2B_PROMPT : IDEY_STANDARD_V1_PROMPT // Use standard prompt for B2C/Mixed
+
+  const prompt = `Evaluate this startup idea using ideY Standard v1 (${ideaType} Mode).
+
+STARTUP IDEA: ${input.idea}
 ${input.targetUsers ? `TARGET USERS: ${input.targetUsers}` : ''}
 ${input.businessType ? `BUSINESS TYPE: ${input.businessType}` : ''}
-
-Score each dimension 0-100 based on these research-backed criteria:
-
-1. **PROBLEM SEVERITY** (Is this a "painkiller" or "vitamin"?)
-   - 80-100: Urgent, critical problem - people actively seek solutions daily
-   - 60-79: Significant pain - causes real frustration, time/money loss
-   - 40-59: Moderate inconvenience - annoying but not urgent
-   - 0-39: Nice-to-have - "vitamin" not "painkiller"
-
-2. **MARKET OPPORTUNITY** (Size × Growth × Accessibility)
-   - 80-100: Large, growing market with clear entry points
-   - 60-79: Good market with solid growth potential
-   - 40-59: Niche or saturated market
-   - 0-39: Tiny or shrinking market
-
-3. **FEASIBILITY** (Can a small team build this?)
-   - 80-100: Straightforward tech, clear path to MVP
-   - 60-79: Achievable with some technical challenges
-   - 40-59: Requires significant resources or expertise
-   - 0-39: Extremely complex, regulatory, or capital-intensive
-
-4. **DIFFERENTIATION** (What makes this unique?)
-   - 80-100: Novel approach, clear competitive moat
-   - 60-79: Some differentiation, can carve out position
-   - 40-59: Me-too product, slight improvements only
-   - 0-39: Commodity, no differentiation
-
-Return JSON:
-{
-  "scores": {
-    "problemSeverity": <0-100>,
-    "marketOpportunity": <0-100>,
-    "feasibility": <0-100>,
-    "differentiation": <0-100>
-  },
-  "verdict": "<one honest sentence verdict>",
-  "explanation": "<2-3 sentences explaining the honest assessment based on the pain score analysis>"
-}`
+${input.geography ? `GEOGRAPHY: ${input.geography}` : ''}
+${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
 
   try {
-    console.log('[Evaluation] Starting...')
-    // Use fast model - scoring is straightforward
-    const evaluation = await callOpenRouterJSON<IdeaEvaluation>(ANTI_HYPE_PROMPT, prompt, 'fast')
-    console.log('[Evaluation] Done')
+    console.log('[Evaluation v1] Starting...')
+    const evaluation = await callOpenRouterJSON<IdeaEvaluation>(selectedPrompt, prompt, 'thinking')
+    console.log('[Evaluation v1] Done')
 
-    // Store in dedicated table (much faster than JSONB)
+    // Store in dedicated table
     const { error: dbError } = await supabase.from('idea_check_evaluations').upsert({
       startup_id: startupId,
+      version: 'v1',
       problem_severity: evaluation.scores.problemSeverity,
+      target_customer_clarity: evaluation.scores.targetCustomerClarity,
       market_opportunity: evaluation.scores.marketOpportunity,
-      feasibility: evaluation.scores.feasibility,
-      differentiation: evaluation.scores.differentiation,
+      competitive_differentiation: evaluation.scores.competitiveDifferentiation,
+      execution_complexity: evaluation.scores.executionComplexity,
+      traction_validation: evaluation.scores.tractionValidation,
+      risk_profile: evaluation.scores.riskProfile,
+      score_details: evaluation.scoreDetails,
+      total_score: evaluation.totalScore,
       verdict: evaluation.verdict,
-      explanation: evaluation.explanation,
+      verdict_rationale: evaluation.verdictRationale,
+      key_strengths: evaluation.keyStrengths,
+      key_risks: evaluation.keyRisks,
+      executive_summary: evaluation.executiveSummary,
       updated_at: new Date().toISOString()
     }, { onConflict: 'startup_id' })
 
     if (dbError) {
-      console.error('[Evaluation] Database error:', dbError)
+      console.error('[Evaluation v1] Database error:', dbError)
       return null
     }
+    
+    // Also save the idea type to startup
+    await supabase.from('startups').update({ 
+        status: 'evaluated',
+        idea_type: ideaType
+    }).eq('id', startupId)
 
-    console.log('[Evaluation] Successfully saved')
-
-    // Update startup status
-    await supabase
-      .from('startups')
-      .update({ status: 'evaluated' })
-      .eq('id', startupId)
+    console.log('[Evaluation v1] Successfully saved')
 
     revalidatePath(`/dashboard/${startupId}`)
     return evaluation
   } catch (error) {
-    console.error('[Evaluation] Error:', error)
+    console.error('[Evaluation v1] Error:', error)
     return null
   }
 }
@@ -629,18 +770,51 @@ export const getAiOutput = cache(async function getAiOutput(startupId: string, o
       .maybeSingle()
     
     if (data) {
-      // Support both new and old column names for backward compatibility
-      return {
-        scores: {
-          // New fields (primary)
-          problemSeverity: data.problem_severity ?? data.market_potential ?? 50,
-          marketOpportunity: data.market_opportunity ?? data.market_potential ?? 50,
-          feasibility: data.feasibility ?? 50,
-          differentiation: data.differentiation ?? data.uniqueness ?? 50,
-        },
-        verdict: data.verdict,
-        explanation: data.explanation
+      // Check if it's v1 format (has version field or new columns)
+      if (data.version === 'v1' || data.total_score !== null) {
+        return {
+          version: 'v1',
+          scores: {
+            problemSeverity: data.problem_severity ?? 3,
+            targetCustomerClarity: data.target_customer_clarity ?? 3,
+            marketOpportunity: data.market_opportunity ?? 3,
+            competitiveDifferentiation: data.competitive_differentiation ?? 3,
+            executionComplexity: data.execution_complexity ?? 3,
+            tractionValidation: data.traction_validation ?? 1,
+            riskProfile: data.risk_profile ?? 3,
+          },
+          scoreDetails: data.score_details ?? {},
+          totalScore: data.total_score ?? 60,
+          verdict: data.verdict ?? 'PIVOT',
+          verdictRationale: data.verdict_rationale ?? data.explanation ?? '',
+          keyStrengths: data.key_strengths ?? [],
+          keyRisks: data.key_risks ?? [],
+          executiveSummary: data.executive_summary ?? ''
+        } as IdeaEvaluation
       }
+      
+      // Legacy format - convert to v1 structure
+      const legacyTotal = ((data.problem_severity ?? 50) + (data.market_opportunity ?? 50) + 
+                          (data.feasibility ?? 50) + (data.differentiation ?? 50)) / 4
+      return {
+        version: 'v1',
+        scores: {
+          problemSeverity: Math.round((data.problem_severity ?? 50) / 20),
+          targetCustomerClarity: 3,
+          marketOpportunity: Math.round((data.market_opportunity ?? 50) / 20),
+          competitiveDifferentiation: Math.round((data.differentiation ?? 50) / 20),
+          executionComplexity: Math.round((data.feasibility ?? 50) / 20),
+          tractionValidation: 1,
+          riskProfile: 3,
+        },
+        scoreDetails: {},
+        totalScore: Math.round(legacyTotal),
+        verdict: legacyTotal >= 70 ? 'BUILD' : legacyTotal >= 50 ? 'PIVOT' : 'KILL',
+        verdictRationale: data.explanation ?? data.verdict ?? '',
+        keyStrengths: [],
+        keyRisks: [],
+        executiveSummary: data.explanation ?? ''
+      } as IdeaEvaluation
     }
   }
 

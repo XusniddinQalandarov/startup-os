@@ -6,8 +6,13 @@ import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
 import { AnalysisView } from '@/components/dashboard/analysis-view'
+import { StageStatusBadge, type StageStatus } from '@/components/ui/stage-status-badge'
+import { ConfirmLockModal } from '@/components/ui/confirm-lock-modal'
+import { OutdatedWarning } from '@/components/ui/outdated-warning'
+import { ScoreCard } from '@/components/dashboard/score-card'
 import { Button } from '@/components/ui'
 import { generateDecision } from '@/app/actions/decision'
+import { lockStage, unlockStage } from '@/app/actions/stages'
 import type { Startup } from '@/types'
 
 interface DecisionStageClientProps {
@@ -15,6 +20,7 @@ interface DecisionStageClientProps {
     analysisData: any
     evaluation: any
     isPremium?: boolean
+    stageStatus?: StageStatus
 }
 
 const tabs = [
@@ -64,39 +70,19 @@ function getVerdict(evaluation: any): { verdict: string; color: string; descript
     return { verdict: 'Kill', color: 'text-red-500', description: 'Too many red flags, consider alternatives' }
 }
 
-const EmptyState = ({ onGenerate }: { onGenerate: () => void }) => (
-    <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Your Final Decision</h3>
-        <p className="text-gray-500 max-w-md mx-auto mb-6">
-            Receive a comprehensive analysis, risk assessment, and a clear Build/Pivot/Kill verdict based on all data.
-        </p>
-        <Button
-            size="lg"
-            onClick={onGenerate}
-            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xl shadow-emerald-200/50 border-0 transform hover:scale-105 transition-all"
-        >
-            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Generate Verdict
-        </Button>
-    </div>
-)
-
 export function DecisionStageClient({
     project,
     analysisData,
     evaluation,
-    isPremium = false // Default to locked
+    isPremium = false,
+    stageStatus = 'draft'
 }: DecisionStageClientProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('analysis')
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+    const [isUnlocking, setIsUnlocking] = useState(false)
+
     const verdict = getVerdict(evaluation)
     const hasData = !!evaluation && !!analysisData
 
@@ -121,9 +107,67 @@ export function DecisionStageClient({
         }
     }
 
+    const handleLock = async () => {
+        const result = await lockStage(project.id, 'decision')
+        if (!result.success) {
+            console.error('Failed to lock stage:', result.error)
+        }
+    }
+
+    const handleUnlock = async () => {
+        setIsUnlocking(true)
+        try {
+            const result = await unlockStage(project.id, 'decision')
+            if (!result.success) {
+                console.error('Failed to unlock stage:', result.error)
+            }
+        } finally {
+            setIsUnlocking(false)
+        }
+    }
+
+    const EmptyState = ({ onGenerate }: { onGenerate: () => void }) => (
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Your Final Decision</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+                Receive a comprehensive analysis, risk assessment, and a clear Build/Pivot/Kill verdict based on all data.
+            </p>
+            <Button
+                size="lg"
+                onClick={onGenerate}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xl shadow-emerald-200/50 border-0 transform hover:scale-105 transition-all"
+            >
+                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate Verdict
+            </Button>
+        </div>
+    )
+
     return (
         <PremiumLock isLocked={!isPremium}>
             <div className="space-y-6">
+                <ConfirmLockModal
+                    isOpen={isLockModalOpen}
+                    onClose={() => setIsLockModalOpen(false)}
+                    onConfirm={handleLock}
+                    stageName="Decision"
+                />
+
+                {stageStatus === 'outdated' && (
+                    <OutdatedWarning
+                        stageName="Decision"
+                        onRegenerate={handleGenerateAll}
+                        isRegenerating={isGenerating}
+                    />
+                )}
+
                 <FullScreenLoader isLoading={isGenerating} message="Reviewing all data, assessing risks, and making a verdict..." />
 
                 {/* Stage Header with Summary */}
@@ -135,7 +179,10 @@ export function DecisionStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Decision</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Decision</h1>
+                                <StageStatusBadge status={stageStatus} />
+                            </div>
                             <p className="text-xs sm:text-sm text-gray-500">Should I build, pivot, or kill this idea?</p>
                         </div>
                     </div>
@@ -145,6 +192,7 @@ export function DecisionStageClient({
                         {!hasData && (
                             <Button
                                 onClick={handleGenerateAll}
+                                disabled={isGenerating || stageStatus === 'locked'}
                                 className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-200/50 border-0"
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,6 +200,44 @@ export function DecisionStageClient({
                                 </svg>
                                 Generate Verdict
                             </Button>
+                        )}
+                        {hasData && (
+                            <>
+                                <Button
+                                    onClick={handleGenerateAll}
+                                    disabled={isGenerating || stageStatus === 'locked'}
+                                    variant="secondary"
+                                >
+                                    {stageStatus === 'locked' ? 'Analysis Locked' : (isGenerating ? 'Regenerating...' : 'Regenerate')}
+                                </Button>
+                                {stageStatus === 'locked' ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleUnlock}
+                                        disabled={isUnlocking}
+                                        className="border-emerald-200 text-emerald-900 hover:bg-emerald-50 hover:text-emerald-900"
+                                    >
+                                        {isUnlocking ? 'Unlocking...' : (
+                                            <>
+                                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                </svg>
+                                                Unlock to Edit
+                                            </>
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => setIsLockModalOpen(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Confirm & Lock
+                                    </Button>
+                                )}
+                            </>
                         )}
 
                         {evaluation && (
@@ -251,15 +337,49 @@ export function DecisionStageClient({
                     <TabPanel isActive={activeTab === 'verdict'}>
                         <div className="space-y-6">
                             {evaluation ? (
-                                <div className={`bg-gradient-to-br ${verdict.verdict === 'Build' ? 'from-emerald-50 to-teal-50 border-emerald-200' :
-                                    verdict.verdict === 'Pivot' ? 'from-amber-50 to-yellow-50 border-amber-200' :
-                                        'from-red-50 to-rose-50 border-red-200'
-                                    } rounded-2xl border p-8 text-center`}>
-                                    <div className={`text-6xl font-bold mb-4 ${verdict.color}`}>
-                                        {verdict.verdict}
+                                <div className="space-y-8">
+                                    {/* Verdict Banner */}
+                                    <div className={`bg-gradient-to-br ${verdict.verdict === 'Build' ? 'from-emerald-50 to-teal-50 border-emerald-200' :
+                                        verdict.verdict === 'Pivot' ? 'from-amber-50 to-yellow-50 border-amber-200' :
+                                            'from-red-50 to-rose-50 border-red-200'
+                                        } rounded-2xl border p-8 text-center`}>
+                                        <div className={`text-6xl font-bold mb-4 ${verdict.color}`}>
+                                            {verdict.verdict}
+                                        </div>
+                                        <p className="text-xl text-gray-700 mb-6">{verdict.description}</p>
+                                        <p className="text-gray-600 max-w-2xl mx-auto">
+                                            {evaluation.verdictRationale || evaluation.explanation || 'No rationale provided.'}
+                                        </p>
                                     </div>
-                                    <p className="text-xl text-gray-700 mb-6">{verdict.description}</p>
-                                    <p className="text-gray-600">{evaluation.explanation}</p>
+
+                                    {/* Executive Summary */}
+                                    {evaluation.executiveSummary && (
+                                        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Executive Summary</h3>
+                                            <div className="prose prose-sm max-w-none text-gray-600">
+                                                <p>{evaluation.executiveSummary}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Detailed Scorecard */}
+                                    <div id="scorecard-section">
+                                        <ScoreCard evaluation={evaluation} ideaType={project.idea_type} />
+                                    </div>
+
+                                    {/* Export / Print Action */}
+                                    <div className="flex justify-center pt-4">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => window.print()}
+                                            className="text-gray-500 hover:text-gray-900"
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                            Export Report PDF
+                                        </Button>
+                                    </div>
                                 </div>
                             ) : <EmptyState onGenerate={handleGenerateAll} />}
                         </div>

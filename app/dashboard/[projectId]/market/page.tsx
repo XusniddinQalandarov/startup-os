@@ -1,6 +1,7 @@
 import { MarketRealityStageClient } from '@/components/dashboard/market-reality-stage-client'
 import { getProject } from '@/app/actions/projects'
 import { getAiOutput } from '@/app/actions/ai'
+import { getStageStatuses } from '@/app/actions/stages'
 import { isPremiumUser } from '@/app/actions/user'
 import { notFound } from 'next/navigation'
 
@@ -20,11 +21,12 @@ interface PageProps {
 export default async function MarketRealityPage({ params }: PageProps) {
     const { projectId } = await params
 
-    const [project, competitors, differentiation, isPremium] = await Promise.all([
+    const [project, competitors, differentiation, isPremium, stageStatuses] = await Promise.all([
         getProject(projectId),
         getAiOutput(projectId, 'competitors'),
         getAiOutput(projectId, 'differentiation'),
-        isPremiumUser()
+        isPremiumUser(),
+        getStageStatuses(projectId)
     ])
 
     if (!project) {
@@ -37,6 +39,7 @@ export default async function MarketRealityPage({ params }: PageProps) {
             competitorAnalysis={competitors}
             differentiationData={differentiation as DifferentiationData | null}
             isPremium={isPremium}
+            stageStatus={stageStatuses.market_reality}
         />
     )
 }

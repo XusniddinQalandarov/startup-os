@@ -6,9 +6,13 @@ import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { StageStatusBadge, type StageStatus } from '@/components/ui/stage-status-badge'
+import { ConfirmLockModal } from '@/components/ui/confirm-lock-modal'
+import { OutdatedWarning } from '@/components/ui/outdated-warning'
 import { Button } from '@/components/ui'
 import { CostsView } from '@/components/dashboard/costs-view'
 import { generateLaunchPlan } from '@/app/actions/launch-plan'
+import { lockStage, unlockStage } from '@/app/actions/stages'
 import type { CostEstimate, Startup } from '@/types'
 
 interface LaunchPlanStageClientProps {
@@ -16,6 +20,7 @@ interface LaunchPlanStageClientProps {
     costs: CostEstimate[] | null
     analysisData: any
     isPremium?: boolean
+    stageStatus?: StageStatus
 }
 
 const tabs = [
@@ -66,12 +71,15 @@ export function LaunchPlanStageClient({
     project,
     costs,
     analysisData,
-    isPremium = false // Default to locked
+    isPremium = false,
+    stageStatus = 'draft'
 }: LaunchPlanStageClientProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('gtm')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+    const [isUnlocking, setIsUnlocking] = useState(false)
 
     // Local state for editable content
     const [channelsContent, setChannelsContent] = useState(analysisData?.channels?.content || '')
@@ -105,6 +113,25 @@ export function LaunchPlanStageClient({
         }
     }
 
+    const handleLock = async () => {
+        const result = await lockStage(project.id, 'launch_plan')
+        if (!result.success) {
+            console.error('Failed to lock stage:', result.error)
+        }
+    }
+
+    const handleUnlock = async () => {
+        setIsUnlocking(true)
+        try {
+            const result = await unlockStage(project.id, 'launch_plan')
+            if (!result.success) {
+                console.error('Failed to unlock stage:', result.error)
+            }
+        } finally {
+            setIsUnlocking(false)
+        }
+    }
+
     const handleSaveChannels = useCallback(async (newContent: string) => {
         setIsSaving(true)
         setChannelsContent(newContent)
@@ -122,6 +149,21 @@ export function LaunchPlanStageClient({
     return (
         <PremiumLock isLocked={!isPremium}>
             <div className="space-y-6">
+                <ConfirmLockModal
+                    isOpen={isLockModalOpen}
+                    onClose={() => setIsLockModalOpen(false)}
+                    onConfirm={handleLock}
+                    stageName="Launch Plan"
+                />
+
+                {stageStatus === 'outdated' && (
+                    <OutdatedWarning
+                        stageName="Launch Plan"
+                        onRegenerate={handleGenerateAll}
+                        isRegenerating={isGenerating}
+                    />
+                )}
+
                 <FullScreenLoader isLoading={isGenerating} message="Estimating costs, identifying channels, and defining metrics..." />
 
                 {/* Stage Header with Summary */}
@@ -133,8 +175,11 @@ export function LaunchPlanStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Launch Plan</h1>
-                            <p className="text-xs sm:text-sm text-gray-500">How do I get my first users?</p>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Launch Plan</h1>
+                                <StageStatusBadge status={stageStatus} />
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-500">Go-to-market strategy and launch costs</p>
                         </div>
                     </div>
 
@@ -143,6 +188,7 @@ export function LaunchPlanStageClient({
                         {!hasData && (
                             <Button
                                 onClick={handleGenerateAll}
+                                disabled={isGenerating || stageStatus === 'locked'}
                                 className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white shadow-lg shadow-pink-200/50 border-0"
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,6 +196,44 @@ export function LaunchPlanStageClient({
                                 </svg>
                                 Generate Plan
                             </Button>
+                        )}
+                        {hasData && (
+                            <>
+                                <Button
+                                    onClick={handleGenerateAll}
+                                    disabled={isGenerating || stageStatus === 'locked'}
+                                    variant="secondary"
+                                >
+                                    {stageStatus === 'locked' ? 'Analysis Locked' : (isGenerating ? 'Regenerating...' : 'Regenerate')}
+                                </Button>
+                                {stageStatus === 'locked' ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleUnlock}
+                                        disabled={isUnlocking}
+                                        className="border-pink-200 text-pink-900 hover:bg-pink-50 hover:text-pink-900"
+                                    >
+                                        {isUnlocking ? 'Unlocking...' : (
+                                            <>
+                                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                </svg>
+                                                Unlock to Edit
+                                            </>
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => setIsLockModalOpen(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                    >
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Confirm & Lock
+                                    </Button>
+                                )}
+                            </>
                         )}
 
                         <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">

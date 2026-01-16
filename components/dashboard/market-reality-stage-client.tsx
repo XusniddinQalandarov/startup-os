@@ -6,9 +6,13 @@ import { StageTabs, TabPanel } from '@/components/ui/stage-tabs'
 import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { PremiumLock } from '@/components/ui/premium-lock'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { StageStatusBadge, type StageStatus } from '@/components/ui/stage-status-badge'
+import { ConfirmLockModal } from '@/components/ui/confirm-lock-modal'
+import { OutdatedWarning } from '@/components/ui/outdated-warning'
 import { Button } from '@/components/ui'
 import { CompetitorsView } from '@/components/dashboard/competitors-view'
 import { generateMarketReality } from '@/app/actions/market-reality'
+import { lockStage, unlockStage } from '@/app/actions/stages'
 import type { Startup } from '@/types'
 
 interface DifferentiationData {
@@ -24,6 +28,7 @@ interface MarketRealityStageClientProps {
     competitorAnalysis: any
     differentiationData: DifferentiationData | null
     isPremium?: boolean // Lock if not premium
+    stageStatus?: StageStatus
 }
 
 const tabs = [
@@ -68,12 +73,15 @@ export function MarketRealityStageClient({
     project,
     competitorAnalysis,
     differentiationData,
-    isPremium = false // Default to locked
+    isPremium = false,
+    stageStatus = 'draft'
 }: MarketRealityStageClientProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('competitors')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+    const [isUnlocking, setIsUnlocking] = useState(false)
 
     // Local state for editable content (initialize from AI data or empty)
     const [unfairAdvantage, setUnfairAdvantage] = useState(differentiationData?.unfairAdvantage || '')
@@ -110,9 +118,43 @@ export function MarketRealityStageClient({
         setTimeout(() => setIsSaving(false), 500)
     }, [])
 
+    const handleLock = async () => {
+        const result = await lockStage(project.id, 'market_reality')
+        if (!result.success) {
+            console.error('Failed to lock stage:', result.error)
+        }
+    }
+
+    const handleUnlock = async () => {
+        setIsUnlocking(true)
+        try {
+            const result = await unlockStage(project.id, 'market_reality')
+            if (!result.success) {
+                console.error('Failed to unlock stage:', result.error)
+            }
+        } finally {
+            setIsUnlocking(false)
+        }
+    }
+
     return (
         <PremiumLock isLocked={!isPremium}>
             <div className="space-y-6">
+                <ConfirmLockModal
+                    isOpen={isLockModalOpen}
+                    onClose={() => setIsLockModalOpen(false)}
+                    onConfirm={handleLock}
+                    stageName="Market Reality"
+                />
+
+                {stageStatus === 'outdated' && (
+                    <OutdatedWarning
+                        stageName="Market Reality"
+                        onRegenerate={handleGenerateAll}
+                        isRegenerating={isGenerating}
+                    />
+                )}
+
                 <FullScreenLoader isLoading={isGenerating} message="Analyzing market landscape and competitors..." />
 
                 {/* Stage Header with Summary */}
@@ -124,23 +166,59 @@ export function MarketRealityStageClient({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Market Reality</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Market Reality</h1>
+                                <StageStatusBadge status={stageStatus} />
+                            </div>
                             <p className="text-xs sm:text-sm text-gray-500">Who else exists and how hard is this market?</p>
                         </div>
                     </div>
 
                     {/* Actions & Summary */}
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3">
-                        {!hasData && (
-                            <Button
-                                onClick={handleGenerateAll}
-                                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg shadow-blue-200/50 border-0"
-                            >
+                        <Button
+                            onClick={handleGenerateAll}
+                            disabled={isGenerating || stageStatus === 'locked'}
+                            className={`bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg shadow-blue-200/50 border-0 ${hasData ? 'order-1 sm:order-none' : ''}`}
+                            variant={hasData ? "secondary" : undefined}
+                        >
+                            {!hasData && (
                                 <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
-                                Generate Analysis
-                            </Button>
+                            )}
+                            {hasData ? (stageStatus === 'locked' ? 'Analysis Locked' : (isGenerating ? 'Regenerating...' : 'Regenerate Analysis')) : (isGenerating ? 'Analyzing...' : 'Analyze Market')}
+                        </Button>
+
+                        {/* Lock/Unlock Button */}
+                        {hasData && (
+                            stageStatus === 'locked' ? (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleUnlock}
+                                    disabled={isUnlocking}
+                                    className="border-blue-200 text-blue-900 hover:bg-blue-50 hover:text-blue-900"
+                                >
+                                    {isUnlocking ? 'Unlocking...' : (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                            </svg>
+                                            Unlock to Edit
+                                        </>
+                                    )}
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => setIsLockModalOpen(true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                >
+                                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    Confirm & Lock
+                                </Button>
+                            )
                         )}
 
                         <div className="flex items-start gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 shadow-sm max-w-md">

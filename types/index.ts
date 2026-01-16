@@ -15,9 +15,12 @@ export interface Startup {
   businessType?: BusinessType
   geography?: string
   founderType?: FounderType
+  idea_type?: 'B2C' | 'B2B' | 'B2G' | 'Mixed'
   status: StartupStatus
   createdAt: string
 }
+
+export type IdeaType = 'B2C' | 'B2B' | 'B2G' | 'Mixed'
 
 export interface Task {
   id: string
@@ -32,14 +35,29 @@ export interface Task {
 }
 
 export interface IdeaEvaluation {
+  version: 'v1'
   scores: {
-    problemSeverity: number    // Is this a "painkiller" or "vitamin"?
-    marketOpportunity: number  // Size × Growth × Accessibility
-    feasibility: number        // Can a small team build this?
-    differentiation: number    // What makes this unique?
+    problemSeverity: number       // Weight: 15% - How real/painful is the problem? (1-5)
+    targetCustomerClarity: number // Weight: 15% - Do we know who this is for? (1-5)
+    marketOpportunity: number     // Weight: 15% - Is this worth building? (1-5)
+    competitiveDifferentiation: number // Weight: 15% - Why this over alternatives? (1-5)
+    executionComplexity: number   // Weight: 15% - How hard to build? (1-5, lower complexity = higher score)
+    tractionValidation: number    // Weight: 15% - Any real-world signal? (1-5)
+    riskProfile: number           // Weight: 10% - How risky? (1-5, lower risk = higher score)
   }
-  verdict: string
-  explanation: string
+  scoreDetails: {
+    [key: string]: {
+      score: number
+      bullets: string[]      // 2-3 explanation bullets
+      keyRisk: string        // Key risk or assumption
+    }
+  }
+  totalScore: number          // Weighted average (0-100)
+  verdict: 'BUILD' | 'PIVOT' | 'KILL'
+  verdictRationale: string
+  keyStrengths: string[]
+  keyRisks: string[]
+  executiveSummary: string
 }
 
 export type QuestionFlagType = 'ask' | 'avoid'

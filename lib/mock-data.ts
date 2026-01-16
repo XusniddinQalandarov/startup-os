@@ -11,14 +11,59 @@ import type {
 } from '@/types'
 
 export const mockEvaluation: IdeaEvaluation = {
+  version: 'v1',
   scores: {
-    problemSeverity: 72,
-    marketOpportunity: 65,
-    feasibility: 65,
-    differentiation: 58,
+    problemSeverity: 4,
+    targetCustomerClarity: 3,
+    marketOpportunity: 4,
+    competitiveDifferentiation: 3,
+    executionComplexity: 4,
+    tractionValidation: 1,
+    riskProfile: 3,
   },
-  verdict: "Promising with significant challenges",
-  explanation: "Your idea addresses a real market need with reasonable demand. However, the competitive landscape is crowded with established players. Technical feasibility is moderate - you'll need specific expertise in AI/ML. Consider focusing on a niche to differentiate from competitors."
+  scoreDetails: {
+    problemSeverity: {
+      score: 4,
+      bullets: ['Addresses real pain point for target users', 'Moderate urgency in solving'],
+      keyRisk: 'May be perceived as nice-to-have rather than must-have'
+    },
+    targetCustomerClarity: {
+      score: 3,
+      bullets: ['Defined segment identified', 'Needs more specific persona work'],
+      keyRisk: 'Customer segment may be too broad'
+    },
+    marketOpportunity: {
+      score: 4,
+      bullets: ['Growing market with tailwinds', 'Clear entry points identified'],
+      keyRisk: 'Market timing may be challenging'
+    },
+    competitiveDifferentiation: {
+      score: 3,
+      bullets: ['Some unique angles identified', 'Easy for competitors to copy'],
+      keyRisk: 'No strong moat against well-funded competitors'
+    },
+    executionComplexity: {
+      score: 4,
+      bullets: ['Straightforward technical implementation', 'Existing tools can be leveraged'],
+      keyRisk: 'Integration complexity may be underestimated'
+    },
+    tractionValidation: {
+      score: 1,
+      bullets: ['Pure idea stage', 'No user validation yet'],
+      keyRisk: 'All assumptions are untested'
+    },
+    riskProfile: {
+      score: 3,
+      bullets: ['Moderate, manageable risks', 'No major blockers identified'],
+      keyRisk: 'Market risk is primary concern'
+    }
+  },
+  totalScore: 66,
+  verdict: 'PIVOT',
+  verdictRationale: "Your idea addresses a real market need with reasonable demand. However, the competitive landscape is crowded with established players. Consider focusing on a niche to differentiate from competitors and validate with real users before heavy investment.",
+  keyStrengths: ['Clear problem identification', 'Feasible technical execution', 'Growing market'],
+  keyRisks: ['No traction or validation yet', 'Weak differentiation', 'Broad customer segment'],
+  executiveSummary: "This startup idea shows promise but requires pivoting to address key weaknesses. The core problem is valid and the market is attractive, but without clear differentiation and user validation, execution risk remains high. Focus on narrowing the target customer and securing early adopters before scaling."
 }
 
 export const mockQuestions: CustomerQuestion[] = [

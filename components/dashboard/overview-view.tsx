@@ -161,7 +161,7 @@ export function OverviewView({ project, initialEvaluation }: OverviewViewProps) 
                             {gradeInfo.message}
                         </h2>
                         <p className="text-xl font-medium text-gray-900 mb-2">{evaluation.verdict}</p>
-                        <p className="text-gray-600 leading-relaxed">{evaluation.explanation}</p>
+                        <p className="text-gray-600 leading-relaxed">{evaluation.verdictRationale}</p>
                     </div>
                 </div>
             </Card>

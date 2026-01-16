@@ -7,8 +7,11 @@ import { EditableContentCard } from '@/components/ui/editable-content-card'
 import { OverviewView } from '@/components/dashboard/overview-view'
 import { QuestionsView } from '@/components/dashboard/questions-view'
 import { FullScreenLoader } from '@/components/ui/full-screen-loader'
+import { StageStatusBadge, type StageStatus } from '@/components/ui/stage-status-badge'
+import { ConfirmLockModal } from '@/components/ui/confirm-lock-modal'
 import { Button } from '@/components/ui'
 import { generateEvaluationAction, generateQuestionsAction, generateAnalysisAction } from '@/app/actions/idea-check'
+import { lockStage, unlockStage } from '@/app/actions/stages'
 import type { IdeaEvaluation, CustomerQuestion, Startup } from '@/types'
 
 interface IdeaCheckStageClientProps {
@@ -16,65 +19,32 @@ interface IdeaCheckStageClientProps {
     evaluation: IdeaEvaluation | null
     questions: CustomerQuestion[] | null
     problemData: any // From analysis
+    stageStatus?: StageStatus
 }
 
-const tabs = [
-    {
-        id: 'problem',
-        label: 'Problem & ICP',
-        icon: (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-        )
-    },
-    {
-        id: 'questions',
-        label: 'Customer Questions',
-        icon: (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        )
-    },
-    {
-        id: 'score',
-        label: 'Pain Score',
-        icon: (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-        )
-    }
-]
-
-// Calculate idea health score from evaluation and content
-// Pain Score = average of all dimensions (all are positive: higher = better)
-// Backward compatible with old field names
-function calculateIdeaHealth(evaluation: IdeaEvaluation | null, problemContent: string, icpContent: string): { score: number; message: string } {
+// Calculate idea health score from evaluation (ideY Standard v1)
+function calculateIdeaHealth(evaluation: IdeaEvaluation | null, problemContent: string, icpContent: string): { score: number; message: string; verdict?: string } {
     if (!evaluation) return { score: 0, message: 'Not evaluated yet' }
 
-    const scores = evaluation.scores as Record<string, number>
+    // v1 format - use totalScore directly
+    if ('totalScore' in evaluation && evaluation.totalScore !== undefined) {
+        const score = evaluation.totalScore
+        const verdict = evaluation.verdict
 
-    // Support both new and old field names for backward compatibility
-    const problemSeverity = scores.problemSeverity ?? scores.marketPotential ?? 50
-    const marketOpportunity = scores.marketOpportunity ?? scores.marketPotential ?? 50
-    const feasibility = scores.feasibility ?? 50
-    const differentiation = scores.differentiation ?? scores.uniqueness ?? 50
-    // If old 'competition' exists, invert it (high competition = low opportunity)
-    const competitionAdjustment = scores.competition ? (100 - scores.competition) : 0
-
-    // Calculate base score
-    let score: number
-    if (scores.problemSeverity !== undefined) {
-        // New format - simple average
-        score = Math.round((problemSeverity + marketOpportunity + feasibility + differentiation) / 4)
-    } else {
-        // Old format - invert competition
-        score = Math.round((scores.marketPotential + feasibility + scores.uniqueness + competitionAdjustment) / 4)
+        if (verdict === 'BUILD') return { score, message: 'Strong fundamentals - proceed with execution', verdict }
+        if (verdict === 'PIVOT') return { score, message: 'Promising - address weaknesses first', verdict }
+        return { score, message: 'High risk - rethink or abandon', verdict }
     }
 
-    // Boost score if content is detailed (more than 200 chars)
+    // Legacy format fallback
+    const scores = evaluation.scores as Record<string, number>
+    const problemSeverity = scores.problemSeverity ?? 50
+    const marketOpportunity = scores.marketOpportunity ?? 50
+    const feasibility = scores.feasibility ?? 50
+    const differentiation = scores.differentiation ?? 50
+
+    let score = Math.round((problemSeverity + marketOpportunity + feasibility + differentiation) / 4)
+
     if (problemContent && problemContent.length > 200) score = Math.min(100, score + 3)
     if (icpContent && icpContent.length > 200) score = Math.min(100, score + 2)
 
@@ -83,17 +53,53 @@ function calculateIdeaHealth(evaluation: IdeaEvaluation | null, problemContent: 
     return { score, message: 'Weak problem signal' }
 }
 
-
 export function IdeaCheckStageClient({
     project,
     evaluation,
     questions,
-    problemData
+    problemData,
+    stageStatus = 'draft'
 }: IdeaCheckStageClientProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState('problem')
     const [isSaving, setIsSaving] = useState(false)
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+    const [isUnlocking, setIsUnlocking] = useState(false)
+
+    // Derived State for B2B Labels
+    const isB2B = project.idea_type === 'B2B' || project.idea_type === 'B2G'
+
+    // Define tabs dynamically inside component to access props
+    const tabs = [
+        {
+            id: 'problem',
+            label: isB2B ? 'Problem & Buyer' : 'Problem & ICP', // B2B terminology
+            icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            )
+        },
+        {
+            id: 'questions',
+            label: isB2B ? 'Buyer Objections' : 'Customer Questions', // B2B terminology
+            icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            )
+        },
+        {
+            id: 'score',
+            label: isB2B ? 'Budget Pain Index' : 'Pain Score', // B2B terminology
+            icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            )
+        }
+    ]
 
     // Local state for editable content
     const [problemContent, setProblemContent] = useState(problemData?.problemStatement?.content || '')
@@ -169,8 +175,34 @@ export function IdeaCheckStageClient({
         setTimeout(() => setIsSaving(false), 500)
     }, [])
 
+    const handleLock = async () => {
+        const result = await lockStage(project.id, 'idea_check')
+        if (!result.success) {
+            console.error('Failed to lock stage:', result.error)
+            // TODO: Show error toast
+        }
+    }
+
+    const handleUnlock = async () => {
+        setIsUnlocking(true)
+        try {
+            const result = await unlockStage(project.id, 'idea_check')
+            if (!result.success) {
+                console.error('Failed to unlock stage:', result.error)
+            }
+        } finally {
+            setIsUnlocking(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
+            <ConfirmLockModal
+                isOpen={isLockModalOpen}
+                onClose={() => setIsLockModalOpen(false)}
+                onConfirm={handleLock}
+                stageName="Idea Check"
+            />
             <FullScreenLoader isLoading={isGenerating} message="Analyzing idea, generating questions, and calculating score..." />
 
             {/* Stage Header with Summary */}
@@ -183,7 +215,10 @@ export function IdeaCheckStageClient({
                         </svg>
                     </div>
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Idea Check</h1>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Idea Check</h1>
+                            <StageStatusBadge status={stageStatus} />
+                        </div>
                         <p className="text-xs sm:text-sm text-gray-500">Is this a real problem worth solving?</p>
                     </div>
                 </div>
@@ -193,7 +228,7 @@ export function IdeaCheckStageClient({
                     {/* Generate / Regenerate Button */}
                     <Button
                         onClick={handleGenerateAll}
-                        disabled={isGenerating}
+                        disabled={isGenerating || stageStatus === 'locked'}
                         variant={hasData ? "secondary" : undefined}
                         className={!hasData ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-200/50 border-0" : ""}
                     >
@@ -202,8 +237,39 @@ export function IdeaCheckStageClient({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         )}
-                        {hasData ? (isGenerating ? 'Regenerating...' : 'Regenerate Analysis') : (isGenerating ? 'Analyzing...' : 'Generate Analysis')}
+                        {hasData ? (stageStatus === 'locked' ? 'Analysis Locked' : (isGenerating ? 'Regenerating...' : 'Regenerate Analysis')) : (isGenerating ? 'Analyzing...' : 'Analyze Idea')}
                     </Button>
+
+                    {/* Lock/Unlock Button */}
+                    {hasData && (
+                        stageStatus === 'locked' ? (
+                            <Button
+                                variant="outline"
+                                onClick={handleUnlock}
+                                disabled={isUnlocking}
+                                className="border-amber-200 text-amber-900 hover:bg-amber-50 hover:text-amber-900"
+                            >
+                                {isUnlocking ? 'Unlocking...' : (
+                                    <>
+                                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                        </svg>
+                                        Unlock to Edit
+                                    </>
+                                )}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => setIsLockModalOpen(true)}
+                                className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Confirm & Lock
+                            </Button>
+                        )
+                    )}
 
                     {evaluation && (
                         <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">

@@ -87,21 +87,19 @@ export default async function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
-              <span className="text-sm font-medium text-gray-700">Build what's worth building</span>
+              <span className="text-sm font-medium text-gray-700">Structured Decision System V1</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
-              <span className="text-gray-900">Turn your </span>
+              <span className="text-gray-900">The Operating System for </span>
               <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                startup idea
+                Venture Validation
               </span>
-              <br />
-              <span className="text-gray-900">into reality</span>
             </h1>
 
             <p className="text-base sm:text-xl text-gray-600 mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed">
-              Get honest feedback, customer questions, MVP scope, roadmap, and actionable tasks.
-              <span className="font-medium text-gray-900"> No hype, just execution.</span>
+              Institutional-grade evaluation for accelerators, studios, and founders.
+              <span className="font-medium text-gray-900"> Turn raw ideas into data-backed investment memoranda.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
