@@ -101,7 +101,38 @@ For each dimension you MUST provide:
 - Key risk or assumption
 
 Tone: Professional, analytical, institution-grade, neutral and precise.
-Do NOT use hype, encouragement, or emotional language.`
+Do NOT use hype, encouragement, or emotional language.
+
+Return JSON with exact structure:
+{
+  "version": "v1",
+  "scores": {
+    "problemSeverity": <1-5>,
+    "targetCustomerClarity": <1-5>,
+    "marketOpportunity": <1-5>,
+    "competitiveDifferentiation": <1-5>,
+    "executionComplexity": <1-5>,
+    "tractionValidation": <1-5>,
+    "riskProfile": <1-5>
+  },
+  "scoreDetails": {
+    "problemSeverity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "targetCustomerClarity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "marketOpportunity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "competitiveDifferentiation": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "executionComplexity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "tractionValidation": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "riskProfile": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." }
+  },
+  "totalScore": <weighted average 0-100>,
+  "verdict": "<BUILD|PIVOT|KILL>",
+  "verdictRationale": "...",
+  "keyStrengths": ["...", "...", "..."],
+  "keyRisks": ["...", "...", "..."],
+  "executiveSummary": "..."
+}
+
+Calculate totalScore as: (sum of all 7 scores) / 35 * 100`
 
 
 // ========== Classification (B2C vs B2B) ==========
@@ -183,14 +214,19 @@ Return JSON with exact structure:
     "riskProfile": <1-5>
   },
   "scoreDetails": {
-    "problemSeverity": { "score": <1-5>, "bullets": ["..."], "keyRisk": "..." },
-    ... etc for all 7 ...
+    "problemSeverity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "targetCustomerClarity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "marketOpportunity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "competitiveDifferentiation": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "executionComplexity": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "tractionValidation": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." },
+    "riskProfile": { "score": <1-5>, "bullets": ["...", "..."], "keyRisk": "..." }
   },
   "totalScore": <weighted average 0-100>,
   "verdict": "<BUILD|PIVOT|KILL>",
   "verdictRationale": "...",
-  "keyStrengths": ["..."],
-  "keyRisks": ["..."],
+  "keyStrengths": ["...", "...", "..."],
+  "keyRisks": ["...", "...", "..."],
   "executiveSummary": "..."
 }
 
@@ -210,6 +246,7 @@ ${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
     console.log('[Evaluation v1] Starting...')
     const evaluation = await callOpenRouterJSON<IdeaEvaluation>(selectedPrompt, prompt, 'thinking')
     console.log('[Evaluation v1] Done')
+    console.log('[Evaluation v1] Has scoreDetails:', !!evaluation.scoreDetails, 'Keys:', Object.keys(evaluation.scoreDetails || {}))
 
     // Store in dedicated table
     const { error: dbError } = await supabase.from('idea_check_evaluations').upsert({
