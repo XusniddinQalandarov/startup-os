@@ -246,7 +246,11 @@ ${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
     console.log('[Evaluation v1] Starting...')
     const evaluation = await callOpenRouterJSON<IdeaEvaluation>(selectedPrompt, prompt, 'thinking')
     console.log('[Evaluation v1] Done')
+    console.log('[Evaluation v1] Full response:', JSON.stringify(evaluation, null, 2))
     console.log('[Evaluation v1] Has scoreDetails:', !!evaluation.scoreDetails, 'Keys:', Object.keys(evaluation.scoreDetails || {}))
+    console.log('[Evaluation v1] scoreDetails.problemSeverity:', evaluation.scoreDetails?.problemSeverity)
+    console.log('[Evaluation v1] keyStrengths:', evaluation.keyStrengths)
+    console.log('[Evaluation v1] keyRisks:', evaluation.keyRisks)
 
     // Store in dedicated table
     const { error: dbError } = await supabase.from('idea_check_evaluations').upsert({
@@ -811,6 +815,9 @@ export const getAiOutput = cache(async function getAiOutput(startupId: string, o
       const isV1 = (data.version === 'v1' || data.total_score !== null) && (data.problem_severity <= 5)
       
       if (isV1) {
+        console.log('[getAiOutput] Retrieved from DB - score_details:', JSON.stringify(data.score_details))
+        console.log('[getAiOutput] Retrieved from DB - key_strengths:', data.key_strengths)
+        console.log('[getAiOutput] Retrieved from DB - key_risks:', data.key_risks)
         return {
           version: 'v1',
           scores: {
