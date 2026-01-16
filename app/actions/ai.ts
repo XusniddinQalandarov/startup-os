@@ -252,6 +252,9 @@ ${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
     console.log('[Evaluation v1] keyStrengths:', evaluation.keyStrengths)
     console.log('[Evaluation v1] keyRisks:', evaluation.keyRisks)
 
+    // Round totalScore to integer for database compatibility
+    const totalScoreInt = Math.round(evaluation.totalScore)
+
     // Store in dedicated table
     const { error: dbError } = await supabase.from('idea_check_evaluations').upsert({
       startup_id: startupId,
@@ -264,7 +267,7 @@ ${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
       traction_validation: evaluation.scores.tractionValidation,
       risk_profile: evaluation.scores.riskProfile,
       score_details: evaluation.scoreDetails,
-      total_score: evaluation.totalScore,
+      total_score: totalScoreInt,
       verdict: evaluation.verdict,
       verdict_rationale: evaluation.verdictRationale,
       key_strengths: evaluation.keyStrengths,
@@ -287,7 +290,10 @@ ${input.founderType ? `FOUNDER TYPE: ${input.founderType}` : ''}`
     console.log('[Evaluation v1] Successfully saved')
 
     revalidatePath(`/dashboard/${startupId}`)
-    return evaluation
+    return {
+      ...evaluation,
+      totalScore: totalScoreInt // Return rounded score
+    }
   } catch (error) {
     console.error('[Evaluation v1] Error:', error)
     return null
