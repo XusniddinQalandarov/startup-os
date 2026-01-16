@@ -52,7 +52,7 @@ export default function PartnersPage() {
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              ideY provides accelerators, incubators, angel investors, and university startup programs with a structured framework to evaluate and validate startup ideas at scale.
+              ideY provides accelerators, incubators, angel investors, and university startup programs with a structured, AI-powered framework to evaluate startup ideas consistently and at scale.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -90,7 +90,7 @@ export default function PartnersPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Accelerators & Incubators</h3>
                 <p className="text-sm text-gray-600">
-                  Screen hundreds of applications efficiently. Identify high-potential startups using standardized evaluation criteria.
+                  Screen applications efficiently. Get standardized Build/Pivot/Kill recommendations for every startup idea using our ideY Standard v1 framework.
                 </p>
               </div>
 
@@ -103,7 +103,7 @@ export default function PartnersPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Angel Investors</h3>
                 <p className="text-sm text-gray-600">
-                  Make informed investment decisions. Get comprehensive risk assessments and market validation data.
+                  Make informed investment decisions. Get detailed risk assessments, market validation, and execution feasibility analysis for every pitch.
                 </p>
               </div>
 
@@ -170,9 +170,9 @@ export default function PartnersPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Scalable Screening</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Fast AI-Powered Analysis</h3>
                   <p className="text-gray-600">
-                    Evaluate 10x more applicants without compromising quality. AI-powered analysis in minutes.
+                    Evaluate ideas in minutes, not hours. AI-powered market research, competitor analysis, and risk assessment.
                   </p>
                 </div>
               </div>
@@ -196,13 +196,13 @@ export default function PartnersPage() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Portfolio Tracking</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Professional Reports</h3>
                   <p className="text-gray-600">
-                    Track all evaluated startups in one dashboard. Compare scores, identify patterns, and share reports.
+                    Export detailed PDF reports with evaluation scores, risk analysis, and Build/Pivot/Kill verdicts ready to share with your team.
                   </p>
                 </div>
               </div>
@@ -239,37 +239,43 @@ export default function PartnersPage() {
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">Unlimited project evaluations</span>
+                  <span className="text-gray-700">Unlimited startup idea evaluations</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">Multi-user team access with role management</span>
+                  <span className="text-gray-700">ideY Standard v1 framework scoring (7 dimensions)</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">White-label reports with your branding</span>
+                  <span className="text-gray-700">AI-powered market research and competitor analysis</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">API access for integration with your systems</span>
+                  <span className="text-gray-700">Build/Pivot/Kill verdict with detailed rationale</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">Dedicated support and onboarding</span>
+                  <span className="text-gray-700">Professional PDF export for reports</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">Custom evaluation criteria and scoring models</span>
+                  <span className="text-gray-700">Priority support and custom volume pricing</span>
+                </li>
+                <li className="flex items-start gap-3 opacity-60">
+                  <svg className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-gray-500">Coming soon: Multi-user team access & white-label branding</span>
                 </li>
               </ul>
 
