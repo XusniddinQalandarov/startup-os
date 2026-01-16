@@ -64,7 +64,7 @@ export default function PartnersPage() {
                   </svg>
                 </Button>
               </Link>
-              <a href="mailto:partners@idey.studio">
+              <a href="mailto:xusniddinqalandarov2004@gmail.com">
                 <Button size="lg" variant="outline" className="rounded-full px-8 border-gray-300 text-gray-700 hover:border-indigo-500 hover:text-indigo-600">
                   Contact Us
                 </Button>
@@ -279,7 +279,7 @@ export default function PartnersPage() {
                 </li>
               </ul>
 
-              <a href="mailto:partners@idey.studio">
+              <a href="mailto:xusniddinqalandarov2004@gmail.com">
                 <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl py-6 text-lg font-semibold shadow-lg shadow-indigo-200/50 border-0">
                   Contact Sales
                   <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -306,7 +306,7 @@ export default function PartnersPage() {
                   Start Free Trial
                 </Button>
               </Link>
-              <a href="mailto:partners@idey.studio">
+              <a href="mailto:xusniddinqalandarov2004@gmail.com">
                 <Button size="lg" variant="outline" className="rounded-full px-8 border-gray-300 text-gray-700 hover:border-indigo-500 hover:text-indigo-600">
                   Schedule Demo
                 </Button>
