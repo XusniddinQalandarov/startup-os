@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Button, Modal, Input } from '@/components/ui'
-import { deleteProject } from '@/app/actions/projects'
+import { Button, Modal } from '@/components/ui'
 import { ChangePassword } from './change-password'
 import type { Startup } from '@/types'
 
@@ -13,23 +12,6 @@ interface ProjectListProps {
 }
 
 export function ProjectList({ projects, isPremium = false }: ProjectListProps) {
-    const [deletingProject, setDeletingProject] = useState<Startup | null>(null)
-    const [isDeleting, setIsDeleting] = useState(false)
-
-    const handleDelete = async () => {
-        if (!deletingProject) return
-        setIsDeleting(true)
-
-        try {
-            await deleteProject(deletingProject.id)
-            setDeletingProject(null)
-        } catch (error) {
-            console.error('Failed to delete project:', error)
-        } finally {
-            setIsDeleting(false)
-        }
-    }
-
     if (projects.length === 0) {
         return (
             <div className="text-center py-12 rounded-2xl border border-dashed border-gray-200 bg-gray-50/50">
@@ -50,84 +32,38 @@ export function ProjectList({ projects, isPremium = false }: ProjectListProps) {
     }
 
     return (
-        <>
-            <div className="space-y-4">
-                {projects.map((project) => (
-                    <div key={project.id} className="group relative">
-                        <Link href={`/dashboard/${project.id}`} className="block">
-                            <div className="flex items-center justify-between p-6 rounded-2xl border border-gray-100 bg-gray-50/50 hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300">
-                                <div className="flex-1 min-w-0 pr-12">
-                                    <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors mb-2">
-                                        {project.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 truncate">{project.idea}</p>
-                                </div>
-                                <div className="flex flex-col items-end gap-3 pl-4 border-l border-gray-50 min-w-[120px] pr-8">
-                                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${project.status === 'evaluated'
-                                        ? 'bg-emerald-50 text-emerald-600'
-                                        : project.status === 'in_progress'
-                                            ? 'bg-blue-50 text-blue-600'
-                                            : 'bg-gray-50 text-gray-500'
-                                        }`}>
-                                        {project.status === 'evaluated' ? 'Evaluated' : project.status.replace('_', ' ')}
-                                    </span>
-                                    <span className="text-xs text-gray-300">
-                                        {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    </span>
-                                </div>
+        <div className="space-y-4">
+            {projects.map((project) => (
+                <div key={project.id} className="group relative">
+                    <Link href={`/dashboard/${project.id}`} className="block">
+                        <div className="flex items-center justify-between p-6 rounded-2xl border border-gray-100 bg-gray-50/50 hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors mb-2">
+                                    {project.name}
+                                </h3>
+                                <p className="text-sm text-gray-500 truncate">{project.idea}</p>
                             </div>
-                        </Link>
-
-                        {/* Delete button - Premium only - Moved to create more space and avoid overlap */}
-                        {isPremium && (
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setDeletingProject(project)
-                                }}
-                                className="absolute right-4 top-4 p-2 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
-                                title="Delete project"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!deletingProject}
-                onClose={() => setDeletingProject(null)}
-                title="Delete Project"
-                footer={
-                    <>
-                        <Button variant="secondary" onClick={() => setDeletingProject(null)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleDelete}
-                            isLoading={isDeleting}
-                            className="bg-red-500 hover:bg-red-600 text-white border-0"
-                        >
-                            Delete
-                        </Button>
-                    </>
-                }
-            >
-                <div className="text-center py-4">
-                    <p className="text-gray-600">
-                        Permanently delete <span className="font-medium text-gray-900">"{deletingProject?.name}"</span>?
-                    </p>
-                    <p className="text-sm text-gray-400 mt-2">This action cannot be undone.</p>
+                            <div className="flex flex-col items-end gap-3 pl-4 border-l border-gray-50 min-w-[120px]">
+                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${project.status === 'evaluated'
+                                    ? 'bg-emerald-50 text-emerald-600'
+                                    : project.status === 'in_progress'
+                                        ? 'bg-blue-50 text-blue-600'
+                                        : 'bg-gray-50 text-gray-500'
+                                    }`}>
+                                    {project.status === 'evaluated' ? 'Evaluated' : project.status.replace('_', ' ')}
+                                </span>
+                                <span className="text-xs text-gray-300">
+                                    {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
-            </Modal>
-        </>
+            ))}
+        </div>
     )
 }
+
 
 interface EditProfileProps {
     displayName: string

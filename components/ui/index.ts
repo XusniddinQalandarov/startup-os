@@ -12,3 +12,7 @@ export { Modal } from './modal'
 export { Tabs, TabPanel } from './tabs'
 
 export { AnimatedBackground } from './animated-background'
+
+export { UpgradeModal } from './upgrade-modal'
+
+export { ProBadge, LockedFeature } from './pro-badge'

@@ -5,6 +5,7 @@ export type FounderType = 'technical' | 'non-technical' | 'mixed'
 export type TaskStatus = 'backlog' | 'in_progress' | 'blocked' | 'done'
 export type SkillTag = 'frontend' | 'backend' | 'ai' | 'business'
 export type StartupStatus = 'evaluating' | 'evaluated' | 'in_progress' | 'completed'
+export type UserPlan = 'free' | 'pro'
 
 export interface Startup {
   id: string

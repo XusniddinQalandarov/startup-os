@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { OnboardingData, Startup } from '@/types'
+import { canCreateProject } from '@/lib/plan'
 
 import { cache } from 'react'
 
@@ -61,12 +62,23 @@ export const getProject = cache(async function getProject(id: string): Promise<S
   }
 })
 
-export async function createProject(data: OnboardingData): Promise<{ id: string } | { error: string }> {
+export async function createProject(data: OnboardingData): Promise<{ id: string } | { error: string; upgradeRequired?: boolean }> {
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: 'Not authenticated' }
+  }
+
+  // Check plan limits before creating
+  const canCreate = await canCreateProject()
+  if (!canCreate.allowed) {
+    return { 
+      error: canCreate.reason === 'UPGRADE_REQUIRED' 
+        ? 'You have reached your project limit. Upgrade to Pro for unlimited projects.'
+        : canCreate.reason || 'Cannot create project',
+      upgradeRequired: canCreate.reason === 'UPGRADE_REQUIRED'
+    }
   }
 
   // Generate a name from the idea (first 50 chars or first sentence)
@@ -107,13 +119,5 @@ export async function updateProjectStatus(id: string, status: string): Promise<v
   revalidatePath('/dashboard')
 }
 
-export async function deleteProject(id: string): Promise<void> {
-  const supabase = await createClient()
-  
-  await supabase
-    .from('startups')
-    .delete()
-    .eq('id', id)
-
-  revalidatePath('/dashboard')
-}
+// Note: deleteProject has been removed per business requirements
+// Projects are permanent to maintain evaluation history integrity
