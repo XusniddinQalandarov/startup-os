@@ -30,8 +30,13 @@ export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 'free'
 
+  // Debug logging
+  console.log('[getUserPlan] User email:', user.email)
+  console.log('[getUserPlan] VIP_PREMIUM_USERS env:', process.env.VIP_PREMIUM_USERS)
+  
   // Check VIP status first - VIP users get pro plan
   if (user.email && isVipUser(user.email)) {
+    console.log('[getUserPlan] VIP user detected! Returning pro')
     return 'pro'
   }
 
@@ -40,6 +45,8 @@ export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan>
     .select('subscription_tier')
     .eq('id', user.id)
     .single()
+
+  console.log('[getUserPlan] Profile subscription_tier:', profile?.subscription_tier)
 
   // Map subscription_tier to UserPlan
   if (profile?.subscription_tier === 'premium') {
@@ -52,6 +59,7 @@ export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan>
 
     if (profileWithExpiry?.subscription_expires_at) {
       const expiresAt = new Date(profileWithExpiry.subscription_expires_at)
+      console.log('[getUserPlan] Expiry check:', expiresAt, 'vs now:', new Date())
       if (expiresAt > new Date()) {
         return 'pro'
       }
@@ -61,6 +69,7 @@ export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan>
     }
   }
 
+  console.log('[getUserPlan] Returning free')
   return 'free'
 })
 
