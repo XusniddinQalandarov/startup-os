@@ -10,8 +10,19 @@ import { cache } from 'react'
 // All plan checks must go through these functions.
 
 /**
+ * Check if user email is in VIP list
+ */
+function isVipUser(email: string | null): boolean {
+  if (!email) return false
+  
+  const vipUsers = process.env.VIP_PREMIUM_USERS?.split(',').map(e => e.trim().toLowerCase()) || []
+  return vipUsers.includes(email.toLowerCase())
+}
+
+/**
  * Get the current user's plan from the database
  * Defaults to 'free' if not found
+ * VIP users always get 'pro' plan
  */
 export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan> {
   const supabase = await createClient()
@@ -19,13 +30,38 @@ export const getUserPlan = cache(async function getUserPlan(): Promise<UserPlan>
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 'free'
 
+  // Check VIP status first - VIP users get pro plan
+  if (user.email && isVipUser(user.email)) {
+    return 'pro'
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
-    .select('plan')
+    .select('subscription_tier')
     .eq('id', user.id)
     .single()
 
-  return (profile?.plan as UserPlan) || 'free'
+  // Map subscription_tier to UserPlan
+  if (profile?.subscription_tier === 'premium') {
+    // Check if premium is still valid (not expired)
+    const { data: profileWithExpiry } = await supabase
+      .from('profiles')
+      .select('subscription_expires_at')
+      .eq('id', user.id)
+      .single()
+
+    if (profileWithExpiry?.subscription_expires_at) {
+      const expiresAt = new Date(profileWithExpiry.subscription_expires_at)
+      if (expiresAt > new Date()) {
+        return 'pro'
+      }
+    } else {
+      // No expiry date means lifetime premium
+      return 'pro'
+    }
+  }
+
+  return 'free'
 })
 
 /**
