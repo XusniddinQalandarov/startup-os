@@ -15,8 +15,15 @@ export interface UserProfile {
 }
 
 /**
- * Get the current user's profile including subscription status
+ * Check if user email is in VIP list
  */
+function isVipUser(email: string | null): boolean {
+  if (!email) return false
+  
+  const vipUsers = process.env.VIP_PREMIUM_USERS?.split(',').map(e => e.trim().toLowerCase()) || []
+  return vipUsers.includes(email.toLowerCase())
+}
+
 export async function getUserProfile(): Promise<UserProfile | null> {
   const supabase = await createClient()
   
@@ -72,6 +79,11 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 export async function isPremiumUser(): Promise<boolean> {
   const profile = await getUserProfile()
   if (!profile) return false
+  
+  // Check VIP status first - VIP users have permanent premium
+  if (isVipUser(profile.email)) {
+    return true
+  }
   
   // Check if premium and not expired
   if (profile.subscriptionTier === 'premium') {

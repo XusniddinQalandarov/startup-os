@@ -14,28 +14,18 @@ export function SubscriptionManager({ isPremium }: SubscriptionManagerProps) {
     const [isDowngradeModalOpen, setIsDowngradeModalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [promoCode, setPromoCode] = useState('')
-    const [promoApplied, setPromoApplied] = useState(false)
     const [promoError, setPromoError] = useState('')
-
-    const handleApplyPromo = () => {
-        if (promoCode.trim().toUpperCase() === 'LSMD4100') {
-            setPromoApplied(true)
-            setPromoError('')
-        } else {
-            setPromoApplied(false)
-            setPromoError('Invalid promo code')
-        }
-    }
 
     const handleUpgrade = async () => {
         setIsLoading(true)
+        setPromoError('') // Clear previous errors
         try {
-            await upgradeToPremium(promoApplied ? 'LSMD4100' : undefined)
+            await upgradeToPremium(promoCode.trim() || undefined)
             setIsUpgradeModalOpen(false)
             setPromoCode('')
-            setPromoApplied(false)
-        } catch (error) {
-            console.error(error)
+        } catch (error: any) {
+            // Show server-side validation errors
+            setPromoError(error.message || 'Failed to upgrade. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -107,7 +97,7 @@ export function SubscriptionManager({ isPremium }: SubscriptionManagerProps) {
                             isLoading={isLoading}
                             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0"
                         >
-                            {promoApplied ? 'Start 1 Week Free Trial' : 'Pay $19.00'}
+                            {promoCode.trim() ? 'Apply Code & Upgrade' : 'Pay $19.00'}
                         </Button>
                     </>
                 }
@@ -133,34 +123,20 @@ export function SubscriptionManager({ isPremium }: SubscriptionManagerProps) {
 
                     {/* Promo Code Input */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Promo Code</label>
-                        <div className="flex gap-2">
-                            <div className="flex-1">
-                                <Input
-                                    placeholder="Enter code"
-                                    value={promoCode}
-                                    onChange={(e) => {
-                                        setPromoCode(e.target.value)
-                                        setPromoError('')
-                                        setPromoApplied(false)
-                                    }}
-                                    className={promoError ? 'border-red-300 focus:ring-red-200' : ''}
-                                />
-                            </div>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={handleApplyPromo}
-                                disabled={!promoCode || promoApplied}
-                            >
-                                Apply
-                            </Button>
-                        </div>
+                        <label className="text-sm font-medium text-gray-700">Promo Code (Optional)</label>
+                        <Input
+                            placeholder="Enter code"
+                            value={promoCode}
+                            onChange={(e) => {
+                                setPromoCode(e.target.value)
+                                setPromoError('')
+                            }}
+                            className={promoError ? 'border-red-300 focus:ring-red-200' : ''}
+                        />
                         {promoError && <p className="text-xs text-red-500">{promoError}</p>}
-                        {promoApplied && (
-                            <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                Code applied: 100% discount for 1 week
+                        {promoCode.trim() && !promoError && (
+                            <p className="text-xs text-gray-500">
+                                Enter a valid promo code to get 7 days free
                             </p>
                         )}
                     </div>
