@@ -40,8 +40,57 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
     )
 }
 
+/**
+ * Validate that the idea text is meaningful, not just gibberish
+ */
+function isValidIdea(text: string): { valid: boolean; error?: string } {
+    const trimmed = text.trim()
+
+    // Check minimum length
+    if (trimmed.length < 10) {
+        return { valid: false, error: 'Please enter at least 10 characters' }
+    }
+
+    // Check for too many repeated characters (like "ffffffff")
+    const repeatedCharsRatio = (trimmed.match(/(.)\1{2,}/g) || []).join('').length / trimmed.length
+    if (repeatedCharsRatio > 0.4) {
+        return { valid: false, error: 'Please enter a meaningful startup idea, not random characters' }
+    }
+
+    // Check for minimum number of words (at least 3)
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0)
+    if (words.length < 3) {
+        return { valid: false, error: 'Please describe your idea in at least 3 words' }
+    }
+
+    // Check for minimum number of unique characters (avoid "aaa bbb ccc")
+    const uniqueChars = new Set(trimmed.toLowerCase().replace(/\s/g, '')).size
+    if (uniqueChars < 5) {
+        return { valid: false, error: 'Please provide more details about your idea' }
+    }
+
+    // Check if it's mostly alphabetic (avoid keyboard mashing like "asdfasdf")
+    const alphaRatio = (trimmed.match(/[a-zA-Z]/g) || []).length / trimmed.replace(/\s/g, '').length
+    if (alphaRatio < 0.5) {
+        return { valid: false, error: 'Please use proper words to describe your idea' }
+    }
+
+    return { valid: true }
+}
+
 function Step1Idea({ value, onChange, onNext }: StepProps) {
-    const isValid = value.idea.length >= 10
+    const [validationError, setValidationError] = useState<string>('')
+    const validation = isValidIdea(value.idea)
+
+    const handleNext = () => {
+        const check = isValidIdea(value.idea)
+        if (!check.valid) {
+            setValidationError(check.error || 'Invalid input')
+            return
+        }
+        setValidationError('')
+        onNext()
+    }
 
     return (
         <div>
@@ -53,13 +102,24 @@ function Step1Idea({ value, onChange, onNext }: StepProps) {
             </p>
             <Textarea
                 label="Your startup idea"
-                placeholder="E.g., A platform that helps remote teams..."
+                placeholder="E.g., A platform that helps remote teams collaborate better by combining video calls with real-time document editing..."
                 value={value.idea}
-                onChange={(e) => onChange({ idea: e.target.value })}
+                onChange={(e) => {
+                    onChange({ idea: e.target.value })
+                    setValidationError('') // Clear error on change
+                }}
                 className="min-h-[160px]"
             />
+            {validationError && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {validationError}
+                </p>
+            )}
             <div className="mt-6 flex justify-end">
-                <Button onClick={onNext} disabled={!isValid}>
+                <Button onClick={handleNext} disabled={!validation.valid}>
                     Continue
                 </Button>
             </div>
