@@ -70,7 +70,7 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
     const getScoreBarColor = (score: number) => {
         if (score >= 4) return 'bg-emerald-500'
         if (score >= 3) return 'bg-amber-500'
-        return 'text-red-500'
+        return 'bg-red-500'
     }
 
     const getCircleColor = (score: number) => {
@@ -86,7 +86,7 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
     useEffect(() => {
         if (!circleRef.current || !scoreRef.current) return
 
-        const radius = 70
+        const radius = 52
         const circumference = 2 * Math.PI * radius
         const progress = evaluation.totalScore / 100
 
@@ -139,28 +139,28 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
                     </div>
                     {/* Animated Circular Progress */}
                     <div className="relative">
-                        <svg className="w-36 h-36 transform -rotate-90">
+                        <svg className="w-28 h-28 transform -rotate-90">
                             {/* Background circle */}
                             <circle
-                                cx="72"
-                                cy="72"
-                                r="70"
+                                cx="56"
+                                cy="56"
+                                r="52"
                                 fill="none"
                                 stroke="#f3f4f6"
-                                strokeWidth="8"
+                                strokeWidth="6"
                             />
                             {/* Progress circle with glow effect */}
                             <circle
                                 ref={circleRef}
-                                cx="72"
-                                cy="72"
-                                r="70"
+                                cx="56"
+                                cy="56"
+                                r="52"
                                 fill="none"
                                 stroke={circleColors.stroke}
-                                strokeWidth="8"
+                                strokeWidth="6"
                                 strokeLinecap="round"
                                 style={{
-                                    filter: `drop-shadow(0 0 8px ${circleColors.glow})`,
+                                    filter: `drop-shadow(0 0 6px ${circleColors.glow})`,
                                     transition: 'stroke 0.3s ease'
                                 }}
                             />
@@ -169,7 +169,7 @@ export function ScoreCard({ evaluation, ideaType }: ScoreCardProps) {
                         <div className="absolute inset-0 flex items-center justify-center">
                             <span
                                 ref={scoreRef}
-                                className={`text-4xl font-bold ${getScoreColor(evaluation.totalScore / 20)}`}
+                                className={`text-3xl font-bold ${getScoreColor(evaluation.totalScore / 20)}`}
                             >
                                 0
                             </span>
