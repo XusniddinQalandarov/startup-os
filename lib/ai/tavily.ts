@@ -30,6 +30,12 @@ export async function searchWeb(query: string, maxResults: number = 5): Promise<
   try {
     console.log(`[Tavily] Searching: "${query}"`)
     
+    // Tavily has a strict 400 character limit for queries
+    const truncatedQuery = query.slice(0, 395) // Leave a little buffer
+    if (query.length > 395) {
+      console.warn(`[Tavily] Query too long (${query.length} chars), truncated to 395.`)
+    }
+
     const response = await fetch(TAVILY_API_URL, {
       method: 'POST',
       headers: {
@@ -37,7 +43,7 @@ export async function searchWeb(query: string, maxResults: number = 5): Promise<
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        query,
+        query: truncatedQuery,
         search_depth: 'basic',
         include_answer: false,
         include_raw_content: false,

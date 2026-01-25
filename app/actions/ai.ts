@@ -1208,14 +1208,17 @@ export async function generateProjectAnalysis(
   const supabase = await createClient()
 
   // Search the web for market data, competitors, and trends
-  console.log('[Analysis] Searching web for market intelligence...')
+  // Create truncated versions for search queries to stay within limits
+  const searchIdea = idea.length > 100 ? idea.slice(0, 100) + '...' : idea
+  const searchTarget = targetUsers && targetUsers.length > 50 ? targetUsers.slice(0, 50) + '...' : (targetUsers || '')
+
   const searchQueries = [
-    `global ${idea} market size revenue 2026 statistics`,
-    `${idea} total addressable market TAM SAM analysis`,
-    `${idea} industry market research report 2026`,
-    `${businessType || 'SaaS'} ${idea} market opportunity revenue forecast`,
-    `${targetUsers || ''} ${idea} market potential customers worldwide`,
-    `${idea} competitive landscape market leaders revenue`,
+    `global ${searchIdea} market size revenue 2026 statistics`,
+    `${searchIdea} total addressable market TAM SAM analysis`,
+    `${searchIdea} industry market research report 2026`,
+    `${businessType || 'SaaS'} ${searchIdea} market opportunity revenue forecast`,
+    `${searchTarget} ${searchIdea} market potential customers worldwide`,
+    `${searchIdea} competitive landscape market leaders revenue`,
   ]
 
   const searchResults = await Promise.all(
