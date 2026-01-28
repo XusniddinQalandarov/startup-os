@@ -80,8 +80,8 @@ export async function callOpenRouter(
         await new Promise(resolve => setTimeout(resolve, delay))
       }
 
-      // Token limits - balanced for speed and completeness
-      const defaultMaxTokens = maxTokens || (modelType === 'fast' ? 2500 : 4000)
+      // Token limits - thinking needs more for complete JSON responses
+      const defaultMaxTokens = maxTokens || (modelType === 'fast' ? 3000 : 8000)
 
       const response = await fetchWithTimeout(
         OPENROUTER_API_URL,
