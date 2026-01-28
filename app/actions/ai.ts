@@ -1212,6 +1212,8 @@ export async function generateProjectAnalysis(
   const searchIdea = idea.length > 100 ? idea.slice(0, 100) + '...' : idea
   const searchTarget = targetUsers && targetUsers.length > 50 ? targetUsers.slice(0, 50) + '...' : (targetUsers || '')
 
+  console.log('[Analysis] Starting web search for market intelligence...')
+  
   const searchQueries = [
     `global ${searchIdea} market size revenue 2026 statistics`,
     `${searchIdea} total addressable market TAM SAM analysis`,
@@ -1224,6 +1226,8 @@ export async function generateProjectAnalysis(
   const searchResults = await Promise.all(
     searchQueries.map(query => searchWeb(query, 3))
   )
+  
+  console.log('[Analysis] Web search complete.')
 
   const webContext = searchResults
     .flat()

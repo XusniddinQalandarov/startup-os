@@ -129,26 +129,49 @@ export function IdeaCheckStageClient({
     const handleGenerateAll = async () => {
         setIsGenerating(true)
 
-        // Safety timeout - just in case everything hangs
+        // Safety timeout - increased to 120s to allow for Tavily searches + AI calls
         const safetyTimeout = setTimeout(() => {
+            console.warn('[Client] Safety timeout reached (120s) - forcing reload')
             setIsGenerating(false)
             window.location.reload()
-        }, 60000) // Increased to 60s to allow all actions to complete
+        }, 120000)
 
         try {
             // Wait for ALL actions to complete before hiding loader
+            // Use allSettled to be resilient to individual failures
             console.log('[Client] Starting all AI generation actions...')
 
-            await Promise.all([
+            const results = await Promise.allSettled([
                 generateEvaluationAction(project.id, project.idea, project.targetUsers, project.businessType)
-                    .then(() => console.log('[Client] Evaluation done')),
+                    .then(r => { console.log('[Client] Evaluation done:', r); return r }),
                 generateQuestionsAction(project.id, project.idea, project.businessType)
-                    .then(() => console.log('[Client] Questions done')),
+                    .then(r => { console.log('[Client] Questions done:', r); return r }),
                 generateAnalysisAction(project.id, project.idea, project.targetUsers, project.businessType)
-                    .then(() => console.log('[Client] Analysis done'))
+                    .then(r => { console.log('[Client] Analysis done:', r); return r })
             ])
 
             clearTimeout(safetyTimeout)
+
+            // Log results for debugging
+            results.forEach((result, i) => {
+                const names = ['Evaluation', 'Questions', 'Analysis']
+                if (result.status === 'rejected') {
+                    console.error(`[Client] ${names[i]} failed:`, result.reason)
+                } else if (!result.value?.success) {
+                    console.warn(`[Client] ${names[i]} returned error:`, result.value?.error)
+                }
+            })
+
+            // Check if at least one succeeded
+            const anySuccess = results.some(r =>
+                r.status === 'fulfilled' && r.value?.success
+            )
+
+            if (!anySuccess) {
+                console.error('[Client] All generation actions failed')
+                setIsGenerating(false)
+                // Still reload to show any partial data
+            }
 
             // Hard reload to guarantee fresh data is displayed (bypass cache)
             if (typeof window !== 'undefined') {
@@ -159,7 +182,7 @@ export function IdeaCheckStageClient({
             }
 
         } catch (error) {
-            console.error('Generation failed', error)
+            console.error('[Client] Generation failed unexpectedly:', error)
             clearTimeout(safetyTimeout)
             setIsGenerating(false)
         }
