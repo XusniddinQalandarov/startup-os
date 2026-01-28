@@ -133,6 +133,7 @@ export function IdeaCheckStageClient({
         const safetyTimeout = setTimeout(() => {
             console.warn('[Client] Safety timeout reached (120s) - forcing reload')
             setIsGenerating(false)
+            router.refresh()
             window.location.reload()
         }, 120000)
 
@@ -170,15 +171,21 @@ export function IdeaCheckStageClient({
             if (!anySuccess) {
                 console.error('[Client] All generation actions failed')
                 setIsGenerating(false)
-                // Still reload to show any partial data
+                return // Don't reload if nothing succeeded
             }
 
-            // Hard reload to guarantee fresh data is displayed (bypass cache)
+            // Small delay to ensure database commits are complete
+            await new Promise(resolve => setTimeout(resolve, 500))
+
+            // Force Next.js to refetch server components
+            router.refresh()
+
+            // Wait for refresh to propagate, then do hard reload
+            await new Promise(resolve => setTimeout(resolve, 300))
+
+            // Hard reload with cache busting
             if (typeof window !== 'undefined') {
-                // Force cache bypass by appending timestamp
-                const url = new URL(window.location.href)
-                url.searchParams.set('_t', Date.now().toString())
-                window.location.href = url.toString()
+                window.location.replace(window.location.pathname)
             }
 
         } catch (error) {
